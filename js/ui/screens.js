@@ -33,6 +33,134 @@
     });
   };
 
+  /* ---------- first-run wizard (replaces the separate language and name screens) ---------- */
+  function W(k) {
+    var L = OE.S.lang;
+    if (L === "nl" || L === "fr") return OE.T[L][k];
+    return OE.T.nl[k] + " / " + OE.T.fr[k];
+  }
+  function resumeStep() {
+    var S = OE.S;
+    if (!(S.tech && S.tech.first)) return "first";
+    if (!S.tech.last) return "last";
+    if (!S.roleSet) return "role";
+    if (!S.lang) return "lang";
+    return "share";
+  }
+  function goStep(step) { if (!mem.wiz) mem.wiz = {}; mem.wiz.step = step; OE.render(1); }
+  function finishWizard() {
+    OE.S.setupDone = true; OE._setupRedo = false;
+    mem.autorunLatest = !(OE.ios && OE.ios()) && OE.fs.state === "granted";
+    OE.S.screen = "form"; OE.save();
+    var run = function () {
+      if (OE.fs.state !== "granted" && !(OE.ios && OE.ios())) { mem.autorunLatest = false; OE.S.screen = "folder"; }
+      OE.render(1);
+    };
+    if (OE.fs.bindLine) OE.fs.bindLine().then(run, run); else run();
+  }
+  OE.redoSetup = function () {
+    OE._setupRedo = true; OE.S.setupDone = false; mem.wiz = { step: "first" }; OE.save(); OE.go("setup");
+  };
+  function wizFrame(n, total, inner) {
+    return '<div class="narrow" id="wiz" data-step="' + mem.wiz.step + '"><p class="wstep">' + esc(OE.fmt(W("wizStep"), { n: n, t: total })) + "</p>" + inner + "</div>";
+  }
+  function batLink() {
+    if (OE.ios && OE.ios()) return "";
+    var x = OE.S.lang ? OE.t() : null;
+    var label = x ? x.wizBat : "ESC_tool_setup.bat";
+    var hint = x ? x.wizBatH : "";
+    return '<p class="hint"><a class="linkb" id="setupBat" href="ESC_tool_setup.bat" download>' + esc(label) + "</a>" + (hint ? "<br>" + esc(hint) : "") + "</p>";
+  }
+  SC.setup = function () {
+    if (!mem.wiz || !mem.wiz.step) mem.wiz = { step: OE._setupRedo ? "first" : resumeStep() };
+    var S = OE.S, step = mem.wiz.step, x = OE.S.lang ? OE.t() : null, F = OE.fs;
+    if (step === "first") {
+      $("card").innerHTML = wizFrame(1, 4, '<h2 class="q">' + esc(W("wizFirst")) + '</h2><label class="lbl" for="fn">' + esc(W("wizFirst")) + '</label><input id="fn" autocomplete="given-name" value="' + esc(S.tech.first || "") + '"><div id="err"></div><div class="btns"><button class="btn pri" id="wizNext">' + esc(W("wizNext")) + "</button></div>");
+      $("fn").onkeydown = function (e) { if (e.key === "Enter") $("wizNext").click(); };
+      OE.bind("wizNext", function () {
+        var v = $("fn").value.replace(/\s+/g, " ").trim();
+        if (!v) { OE.err(W("needName")); return; }
+        S.tech.first = v; OE.save(); goStep("last");
+      });
+      return;
+    }
+    if (step === "last") {
+      $("card").innerHTML = wizFrame(2, 4, '<h2 class="q">' + esc(W("wizLast")) + '</h2><label class="lbl" for="lnm">' + esc(W("wizLast")) + '</label><input id="lnm" autocomplete="family-name" value="' + esc(S.tech.last || "") + '"><div id="err"></div><div class="btns"><button class="btn sec" id="wizBack">‹ ' + esc(W("back")) + '</button><button class="btn pri" id="wizNext">' + esc(W("wizNext")) + "</button></div>");
+      $("lnm").onkeydown = function (e) { if (e.key === "Enter") $("wizNext").click(); };
+      OE.bind("wizBack", function () { goStep("first"); });
+      OE.bind("wizNext", function () {
+        var v = $("lnm").value.replace(/\s+/g, " ").trim();
+        if (!v) { OE.err(W("needName")); return; }
+        S.tech.last = v; OE.save(); goStep("role");
+      });
+      return;
+    }
+    if (step === "role") {
+      $("card").innerHTML = wizFrame(3, 4, '<h2 class="q">' + esc(W("wizRole")) + '</h2><button class="btn pri big" id="roleEsc">ESC<small>ESC_Share</small></button><button class="btn sec big" id="roleEsa">ESA<small>ESA_Share</small></button><div class="btns"><button class="btn sec" id="wizBack">‹ ' + esc(W("back")) + "</button></div>");
+      function choose(line) {
+        S.line = line; S.roleSet = true; OE.save();
+        var nxt = function () { goStep("lang"); };
+        if (F.bindLine) F.bindLine().then(nxt, nxt); else nxt();
+      }
+      OE.bind("roleEsc", function () { choose("ESC"); });
+      OE.bind("roleEsa", function () { choose("ESA"); });
+      OE.bind("wizBack", function () { goStep("last"); });
+      return;
+    }
+    if (step === "lang") {
+      $("card").innerHTML = wizFrame(4, 4, '<h2 class="q">' + esc(W("wizLang")) + '</h2><button class="btn pri big" data-l="nl">Nederlands<small>NL</small></button><button class="btn sec big" data-l="fr">Français<small>FR</small></button><div class="btns"><button class="btn sec" id="wizBack">‹ ' + esc(W("back")) + "</button></div>");
+      OE.bind("wizBack", function () { goStep("role"); });
+      [].forEach.call($("card").querySelectorAll("[data-l]"), function (b) {
+        b.onclick = function () {
+          S.lang = b.dataset.l; OE.save(); OE.hdr(); OE.brwUI();
+          if (OE.ios && OE.ios()) { finishWizard(); return; }
+          if (F.state === "unsupported") { S.setupDone = true; OE._setupRedo = false; S.screen = "folder"; OE.save(); OE.render(1); return; }
+          goStep("share");
+        };
+      });
+      return;
+    }
+    if (step === "share") {
+      var ready = F.state === "granted", prompt = F.state === "prompt", other = F.line() === "ESA" ? "ESC" : "ESA";
+      var h = '<h2 class="q">' + esc(OE.fmt(x.wizShare, { s: F.shareName() })) + "</h2>";
+      if (ready) h += '<p class="hint" id="shareOk">' + esc(OE.fmt(x.wizShareOk, { s: F.shareName(), p: F.paramDirName() })) + "</p>";
+      if (prompt) h += '<p class="hint">' + esc(x.folderRenewP) + '</p><button class="btn pri big" id="renew">' + esc(x.folderRenew) + "</button>";
+      h += '<button class="btn ' + (ready || prompt ? "sec" : "pri") + ' big" id="pick">' + esc(OE.fmt(ready || prompt ? x.folderChange : x.folderPick, { s: F.shareName() })) + "</button>";
+      if (F.line() !== "ESA" && !(F._dirs && F._dirs.ESA)) h += '<button class="btn sec big" id="pickOther">' + esc(OE.fmt(x.folderOther, { s: C.SHARES.ESA })) + "</button>";
+      if (ready) h += '<div class="btns"><button class="btn pri" id="wizNext">' + esc(x.wizNext) + "</button></div>";
+      h += batLink() + '<div id="err"></div><div class="btns"><button class="btn sec" id="wizBack">‹ ' + esc(x.back) + "</button></div>";
+      $("card").innerHTML = wizFrame(4, 4, h);
+      function fail(e) { if (e && e.name === "AbortError") return; OE.err(e && e.message === "denied" ? x.folderDenied : OE.fmt(x.folderErr, { e: (e && e.message) || e })); }
+      function afterShare() { if (F.line() === "ESA") finishWizard(); else goStep("docs"); }
+      OE.bind("pick", function () { F.pick().then(afterShare, fail); });
+      OE.bind("pickOther", function () { F.pick("ESA").then(function () { SC.setup(); }, fail); });
+      OE.bind("renew", function () { F.renewAll().then(function () { if (F.state === "granted") afterShare(); else SC.setup(); }, fail); });
+      OE.bind("wizNext", afterShare);
+      OE.bind("wizBack", function () { goStep("lang"); });
+      return;
+    }
+    if (step === "docs") {
+      var srcBtn = function (key, label, hint) {
+        var s = null; (F.sources || []).forEach(function (it) { if (it.key === key) s = it; });
+        var okb = s && s.handle;
+        return '<div class="wosel"><div><b>' + esc(label) + "</b>" + (hint ? "<small>" + esc(hint) + "</small>" : "") + '</div><button type="button" class="btn ' + (okb ? "ok" : "sec") + '" data-allow="' + esc(key) + '">' + esc(okb ? "✓ " + (s.handle.name || x.srcOk) : x.srcAllow) + "</button></div>";
+      };
+      var h = '<h2 class="q">' + esc(x.wizDocs) + '</h2><p class="hint">' + esc(x.wizDocsP) + "</p>" +
+        srcBtn("docs", "Public Documents", "C:\\Users\\Public\\Documents") +
+        '<p class="hint">' + esc(x.wizOpt || x.srcH) + "</p>" +
+        srcBtn("eeps", "EEPS", "C:\\EEPS Files") +
+        srcBtn("downloads", x.srcDown, x.srcDownHint) +
+        batLink() + '<div id="err"></div><div class="btns"><button class="btn sec" id="wizBack">‹ ' + esc(x.back) + '</button><button class="btn pri" id="wizDone">' + esc(x.wizDone) + "</button></div>";
+      $("card").innerHTML = wizFrame(4, 4, h);
+      [].forEach.call($("card").querySelectorAll("[data-allow]"), function (b) {
+        b.onclick = function () { F.allowSource(b.getAttribute("data-allow")).then(function () { SC.setup(); }, function (e) { if (e && e.name === "AbortError") return; OE.err(OE.fmt(x.latestErr, { e: (e && e.message) || e })); }); };
+      });
+      OE.bind("wizBack", function () { goStep("share"); });
+      OE.bind("wizDone", finishWizard);
+      return;
+    }
+  };
+
   /* ---------- folder setup / renew ---------- */
   SC.folder = function () {
     var x = OE.t(), F = OE.fs, st = F.state, h = "";
@@ -63,11 +191,13 @@
     $("card").innerHTML = '<div class="narrow"><h2 class="q">' + x.setH + '</h2><ul class="list">' +
       "<li><span><b>" + x.setName + "</b>" + esc(S.tech.first + " " + S.tech.last) + '</span><button class="edit" id="eName">' + x.edit + "</button></li>" +
       "<li><span><b>" + x.setFolder + "</b>" + esc(OE.fs.label() || x.none) + '</span><button class="edit" id="eDir">' + x.edit + "</button></li>" +
-      "<li><span><b>" + x.setLang + "</b>" + (S.lang === "fr" ? "Français" : "Nederlands") + '</span><button class="edit" id="eLang">' + x.edit + "</button></li></ul>" +
+      "<li><span><b>" + x.setLang + "</b>" + (S.lang === "fr" ? "Français" : "Nederlands") + '</span><button class="edit" id="eLang">' + x.edit + "</button></li>" +
+      "<li><span><b>" + x.wizRedo + "</b><a class=\"linkb\" id=\"setupBat\" href=\"ESC_tool_setup.bat\" download>ESC_tool_setup.bat</a></span><button class=\"edit\" id=\"reSetup\">" + x.wizRedo + "</button></li></ul>" +
       '<div class="btns"><button class="btn pri" id="bk">‹ ' + x.back + "</button></div></div>";
     OE.bind("eName", function () { OE.go("tech"); });
     OE.bind("eDir", function () { OE.go("folder"); });
     OE.bind("eLang", function () { S.lang = S.lang === "fr" ? "nl" : "fr"; OE.save(); OE.render(1); });
+    OE.bind("reSetup", function () { OE.redoSetup(); });
     OE.bind("bk", function () { OE.go("form", -1); });
   };
 
@@ -308,6 +438,7 @@
     $("srchT").onclick = function () { setSearch(!mem.srchOpen); };
     upd(); numTip(); drawSearch(); scan(); if (f.dossier && f.fam && !mem.sel) checkExisting();
     OE.bind("save", function () { save(x, f); });
+    if (mem.autorunLatest) { mem.autorunLatest = false; latestParam(x, function (file) { f.file = file; upd(); }); }
   };
 
   /* ---------- "Laatste parameterfile ophalen" ---------- */

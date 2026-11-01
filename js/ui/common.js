@@ -15,7 +15,7 @@
       ln.hidden = !S.lang;
       [].forEach.call(ln.querySelectorAll("button"), function (b) { b.classList.toggle("on", b.dataset.line === (S.line === "ESA" ? "ESA" : "ESC")); b.setAttribute("aria-checked", b.classList.contains("on") ? "true" : "false"); });
     }
-    var st = OE.$("set"); st.hidden = !S.lang || !(S.tech.first && S.tech.last); st.title = st.ariaLabel = OE.t().settings.replace(/^\S+\s/, ""); if (OE.netUI) OE.netUI(); OE.fitBrand();
+    var st = OE.$("set"); st.hidden = S.screen === "setup" || !S.lang || !(S.tech.first && S.tech.last); st.title = st.ariaLabel = OE.t().settings.replace(/^\S+\s/, ""); if (OE.netUI) OE.netUI(); OE.fitBrand();
   };
   /* dormakaba logo (same behaviour as Onderhoud_Entretien): full word mark only when it fits next to the title, else just the red symbol. */
   OE.fitBrand = function () {
@@ -34,8 +34,9 @@
   /* Flow guard: language -> name -> folder -> form. */
   OE.render = function (dir) {
     var S = OE.S, fs = OE.fs.state;
-    if (!S.lang) S.screen = "lang";
-    else if (!(S.tech.first && S.tech.last) && S.screen !== "lang") S.screen = "tech";
+    if (OE.needsSetup()) S.screen = "setup";
+    else if (!S.lang) S.screen = "setup";
+    else if (!(S.tech.first && S.tech.last) && S.screen !== "tech") S.screen = "setup";
     else if (fs === "ios" && S.screen === "folder") S.screen = "form";
     else if ((S.screen === "form" || S.screen === "result") && fs !== "granted" && fs !== "ios") S.screen = "folder";
     OE.brwUI(); OE.hdr(); if (OE.hideNumTip) OE.hideNumTip();
@@ -105,12 +106,14 @@
     var S = OE.S, m = OE.$("modal"), sc = S.lang ? S.screen : "lang", both = !S.lang, L = S.lang || "nl", H = OE.HELP[L];
     var title = both ? "Help / Aide" : H.title, close = both ? OE.HELP.nl.close + " / " + OE.HELP.fr.close : H.close;
     var body = both ? "<h3>Nederlands</h3>" + helpBody("nl", sc) + "<h3>Français</h3>" + helpBody("fr", sc) : helpBody(L, sc);
+    var redo = both ? "Setup opnieuw / Reconfigurer" : OE.T[L].wizRedo;
     m.innerHTML = '<div class="card hlp" id="hlp" role="dialog" aria-modal="true" aria-labelledby="hlph"><div class="hh"><h2 id="hlph">' + OE.esc(title) + '</h2><button type="button" class="hx" id="hlpx" aria-label="' + OE.esc(close) + '">×</button></div>' +
-      body + '<div class="btns"><button type="button" class="btn sec" id="hlpc">' + OE.esc(close) + "</button></div></div>";
+      body + '<p><a class="linkb" id="setupBat" href="ESC_tool_setup.bat" download>ESC_tool_setup.bat</a></p><div class="btns"><button type="button" class="btn sec" id="reSetup">' + OE.esc(redo) + '</button><button type="button" class="btn sec" id="hlpc">' + OE.esc(close) + "</button></div></div>";
     m.hidden = false; m.dataset.help = "1";
     function shut() { m.hidden = true; m.dataset.help = ""; m.onclick = null; document.removeEventListener("keydown", key); }
     function key(e) { if (e.key === "Escape") shut(); }
     OE.$("hlpx").onclick = OE.$("hlpc").onclick = shut;
+    OE.$("reSetup").onclick = function () { shut(); if (OE.redoSetup) OE.redoSetup(); };
     m.onclick = function (e) { if (e.target === m) shut(); };
     document.addEventListener("keydown", key);
     setTimeout(function () { try { OE.$("hlpx").focus(); } catch (e) {} }, 30);

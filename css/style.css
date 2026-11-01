@@ -34,6 +34,7 @@ textarea::placeholder{font-size:14px;line-height:1.35}
 @keyframes inR{from{transform:translateX(40px);opacity:0}to{transform:none;opacity:1}}
 @keyframes inL{from{transform:translateX(-40px);opacity:0}to{transform:none;opacity:1}}
 .start h2{margin:0 0 6px;font-size:22px}.start p{color:var(--mu);margin:0 0 18px}
+.wstep{font-size:12px;font-weight:800;color:var(--a);letter-spacing:.04em;margin:0 0 8px}
 .big{display:block;width:100%;margin:10px 0;text-align:left;font-size:19px;padding:20px}
 .big small{display:block;font-weight:500;opacity:.8;font-size:14px;margin-top:2px}
 pre{white-space:pre-wrap;word-wrap:break-word;font:inherit;font-size:15px;line-height:1.5;margin:0;background:#f8fafc;border-radius:14px;padding:16px;max-height:60vh;overflow:auto}

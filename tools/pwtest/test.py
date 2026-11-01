@@ -16,14 +16,40 @@ with sync_playwright() as p:
         if state:
             pg.evaluate("k=>{for (const key of Object.keys(localStorage)) {} }", None)
         return ctx,pg
-    def setup(pg, lang="nl"):
-        # language + name via UI
-        pg.click(f"#seg button[data-l={lang}]") if False else None
+    def wiz(pg, lang="nl", first="Jan", last="P", role="ESC", until="app"):
+        for _ in range(12):
+            pg.wait_for_selector("#wiz, #unsup, #latest, #iosHint", timeout=10000)
+            w = pg.query_selector("#wiz")
+            step = w.get_attribute("data-step") if w else ""
+            if until == step:
+                return
+            if not w:
+                return
+            if step == "first":
+                pg.fill("#fn", first); pg.click("#wizNext")
+            elif step == "last":
+                pg.fill("#lnm", last); pg.click("#wizNext")
+            elif step == "role":
+                pg.click("#roleEsa" if role == "ESA" else "#roleEsc")
+            elif step == "lang":
+                pg.click("#card button[data-l=%s]" % lang)
+                pg.wait_for_selector("#wiz[data-step=share], #unsup, #iosHint, #latest")
+            elif step == "share":
+                if pg.query_selector("#wizNext"): pg.click("#wizNext")
+                elif pg.query_selector("#renew"): pg.click("#renew")
+                else: pg.click("#pick")
+                pg.wait_for_selector("#wiz[data-step=docs], #latest, #iosHint, #unsup")
+            elif step == "docs":
+                pg.click("#wizDone")
+                pg.wait_for_selector("#latest, #iosHint, #unsup")
+            else:
+                return
     # 1 first use
     ctx,pg=page({})
-    pg.click("#card button[data-l=nl]"); pg.fill("#fn","Jan"); pg.fill("#lnm","Peeters"); pg.click("#go")
-    pg.wait_for_selector("#pick"); ok("first use: folder screen with pick button", "ESC_Share" in pg.inner_text("#pick"))
-    pg.click("#pick"); pg.wait_for_selector("#latest")
+    wiz(pg, first="Jan", last="Peeters", until="share")
+    pg.wait_for_selector("#pick"); ok("first use: wizard share step", "ESC_Share" in pg.inner_text("#pick") and pg.get_attribute("#wiz","data-step")=="share")
+    ok("wizard offers the setup script", "ESC_tool_setup.bat" in (pg.get_attribute("#setupBat","href") or ""))
+    pg.click("#pick"); pg.wait_for_selector("#wiz[data-step=docs]"); pg.click("#wizDone"); pg.wait_for_selector("#latest")
     tree=pg.evaluate("Object.keys(__root.c.projecten.c)")
     ok("first use: projecten + ESC-param created", "ESC-param" in tree)
     ok("first use: handle stored", pg.evaluate("sessionStorage.getItem('dirPicked')")=="1")
@@ -37,11 +63,11 @@ with sync_playwright() as p:
     ctx.close()
     # 3 prompt path
     ctx,pg=page({"params":[["a.xml",1]]}, perm="prompt", picked=True)
-    pg.click("#card button[data-l=nl]"); pg.fill("#fn","Jan"); pg.fill("#lnm","P"); pg.click("#go")
+    wiz(pg, until="share")
     pg.wait_for_selector("#renew")
     ok("prompt: one 'Toestaan' button", pg.inner_text("#renew").strip()=="Toestaan")
     ok("prompt: share can be changed", "wijzigen" in pg.inner_text("#pick") and "ESC_Share" in pg.inner_text("#pick"))
-    pg.click("#renew"); pg.wait_for_selector("#latest")
+    pg.click("#renew"); pg.wait_for_selector("#wiz[data-step=docs]"); pg.click("#wizDone"); pg.wait_for_selector("#latest")
     ok("prompt: one click requests permission -> form", "request" in pg.evaluate("__log") and "picker" not in pg.evaluate("__log"))
     # one match
     pg.click("#latest"); pg.wait_for_selector("#latestUse")
@@ -50,7 +76,7 @@ with sync_playwright() as p:
     ctx.close()
     # newest across source trees: recursive, extension case, .mhx and other ext ignored
     ctx,pg=page({"sources":{"pavis3":[["sub/new.mot",0,30],["B.XML",2,2048],["old.xml",10],["skip.mhx",0,99],["e.txt",0]],"downloads":[["c.eep",4]]},"docsPaths":[["Pavis3/side/ignore.xml",0,80],["Loose/file.xml",0,80]]}, picked=True)
-    pg.click("#card button[data-l=fr]"); pg.fill("#fn","Jan"); pg.fill("#lnm","P"); pg.click("#go"); pg.click("#cont"); pg.wait_for_selector("#latest")
+    wiz(pg, lang="fr"); pg.wait_for_selector("#latest")
     ok("fr: button translated", "Récupérer" in pg.inner_text("#latest"))
     pg.click("#latest"); pg.wait_for_selector("#latestUse")
     shown=pg.inner_text("#latestList")
@@ -59,7 +85,7 @@ with sync_playwright() as p:
     ctx.close()
     # full save using fetched file
     ctx,pg=page({"params":[["z.xml",0]]}, picked=True)
-    pg.click("#card button[data-l=nl]"); pg.fill("#fn","Jan"); pg.fill("#lnm","P"); pg.click("#go"); pg.click("#cont"); pg.wait_for_selector("#latest")
+    wiz(pg); pg.wait_for_selector("#latest")
     pg.select_option("#fam", index=1); pg.select_option("#sub", index=1); pg.fill("#dos","D1"); pg.fill("#ser","S"); pg.fill("#ord","O")
     pg.click("#latest"); pg.click("#latestUse"); pg.click("#save"); pg.wait_for_selector("#rFile")
     fn=pg.inner_text("#rFile"); ok("save with fetched file: name %s"%fn, fn.endswith(".xml") and "D1" in fn)
@@ -87,12 +113,13 @@ with sync_playwright() as p:
     pg.add_init_script("sessionStorage.setItem('mockcfg','{}')"); pg.add_init_script(path="/workspace/esctest/mock.js"); pg.goto(URL)
     pg.wait_for_selector("#brw:not([hidden])")
     ok("edge: banner (NL+FR before lang)", "Google Chrome" in pg.inner_text("#brw") and "Edge" in pg.inner_text("#brw") and "Copier" in pg.inner_text("#brw"))
-    pg.click("#card button[data-l=nl]")
+    pg.fill("#fn","A"); pg.click("#wizNext"); pg.fill("#lnm","B"); pg.click("#wizNext"); pg.click("#roleEsc")
+    pg.wait_for_selector("#wiz[data-step=lang]"); pg.click("#card button[data-l=nl]")
     ok("edge: NL only after lang", "Link kopiëren" in pg.inner_text("#brwCopy") and "Copier" not in pg.inner_text("#brw"))
     pg.click("#brwCopy"); pg.wait_for_selector("#brwMsg:has-text('gekopieerd')")
     ok("edge: copy puts URL on clipboard", pg.evaluate("navigator.clipboard.readText()")=="https://sealink68.github.io/ESC_tool/")
     pg.click("#brwGo"); ok("edge: 'Toch doorgaan' hides banner", pg.is_hidden("#brw"))
-    pg.fill("#fn","A"); pg.fill("#lnm","B"); pg.click("#go"); pg.wait_for_selector("#pick")
+    pg.wait_for_selector("#pick")
     ok("edge: stays dismissed in session, flow usable", pg.is_hidden("#brw"))
     pg.reload(); pg.wait_for_selector("#pick"); ok("edge: dismissed survives reload in same session", pg.is_hidden("#brw"))
     ctx.close()
@@ -102,13 +129,13 @@ with sync_playwright() as p:
     # Firefox-like: no showDirectoryPicker
     ctx=b.new_context(service_workers="block", user_agent="Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:131.0) Gecko/20100101 Firefox/131.0"); pg=ctx.new_page()
     pg.add_init_script("delete window.showDirectoryPicker; Object.defineProperty(window,'showDirectoryPicker',{value:undefined})"); pg.goto(URL)
-    pg.click("#card button[data-l=fr]"); pg.fill("#fn","A"); pg.fill("#lnm","B"); pg.click("#go"); pg.wait_for_selector("#unsup")
+    wiz(pg, lang="fr", first="A", last="B"); pg.wait_for_selector("#unsup")
     ok("nofs: banner FR, no continue button", "Firefox" in pg.inner_text("#brw") and pg.query_selector("#brwGo") is None)
     ok("nofs: save flow blocked (unsupported screen, no form)", pg.query_selector("#save") is None and "Chrome" in pg.inner_text("#unsup"))
     ctx.close()
     # ESA / ESC switch
     ctx,pg=page({}, picked=True)
-    pg.click("#card button[data-l=nl]"); pg.fill("#fn","Jan"); pg.fill("#lnm","P"); pg.click("#go"); pg.click("#cont"); pg.wait_for_selector("#fam")
+    wiz(pg); pg.wait_for_selector("#fam")
     esc_opts=pg.eval_on_selector_all("#fam option","e=>e.map(x=>x.textContent)")
     ok("ESC shows existing families", "Kerberos" in esc_opts and "ES250 Proline Easy" not in esc_opts)
     ok("ESC targets ESC_Share", "ESC_Share" in pg.inner_text("#shareNow"))
@@ -133,7 +160,7 @@ with sync_playwright() as p:
     ctx.close()
     # Toestaan remembers a source folder (browser still needs one user pick)
     ctx,pg=page({}, picked=True)
-    pg.click("#card button[data-l=nl]"); pg.fill("#fn","Jan"); pg.fill("#lnm","P"); pg.click("#go"); pg.click("#cont");     pg.wait_for_selector("[data-allow=docs]")
+    wiz(pg); pg.wait_for_selector("[data-allow=docs]")
     pg.click("[data-allow=docs]")
     ok("Documents pick is a single picker", "picker:src-docs" in pg.evaluate("__log"))
     ok("source shows as allowed", "✓" in pg.inner_text("[data-allow=docs]"))
@@ -143,7 +170,8 @@ with sync_playwright() as p:
     # iPhone: no Chrome wall, file fallback, hint about Downloads and offline upload
     IOS="Mozilla/5.0 (iPhone; CPU iPhone OS 17_5 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.5 Mobile/15E148 Safari/604.1"
     ctx=b.new_context(service_workers="block", user_agent=IOS, viewport={"width":390,"height":844}); pg=ctx.new_page(); pg.goto(URL)
-    pg.click("#card button[data-l=nl]"); pg.fill("#fn","Jan"); pg.fill("#lnm","P"); pg.click("#go"); pg.wait_for_selector("#iosHint")
+    wiz(pg); pg.wait_for_selector("#iosHint")
+    ok("ios: wizard skips folders", pg.query_selector("#wiz") is None)
     ok("ios: chrome banner does not block", pg.is_hidden("#brw") and pg.is_visible("#save") and pg.query_selector("#unsup") is None)
     ok("ios: Bestand kiezen", "Bestand kiezen" in pg.inner_text("#latest"))
     hint=pg.inner_text("#iosHint")
@@ -155,6 +183,14 @@ with sync_playwright() as p:
     pg.set_input_files("#file", {"name":"from-phone.eep","mimeType":"application/octet-stream","buffer":b"abc"})
     pg.click("#save"); pg.wait_for_selector("#iosFileDl")
     ok("ios save offers renamed download", pg.get_attribute("#iosFileDl","download").endswith(".eep") and "D2" in pg.get_attribute("#iosFileDl","download"))
+    ctx.close()
+    # saved name+language from before the wizard exists: skip it
+    ctx=b.new_context(service_workers="block"); pg=ctx.new_page()
+    pg.add_init_script("localStorage.setItem('esc_state', JSON.stringify({lang:'nl',tech:{first:'Jan',last:'P'},line:'ESC',screen:'form'}));")
+    pg.add_init_script("sessionStorage.setItem('mockcfg','{}');sessionStorage.setItem('perm','granted');")
+    pg.add_init_script(path="/workspace/esctest/mock.js")
+    pg.goto(URL); pg.wait_for_selector("#pick")
+    ok("existing user skips the wizard", pg.query_selector("#wiz") is None and "ESC_Share" in pg.inner_text("#pick"))
     ctx.close(); b.close()
 srv.shutdown()
 print("%d/%d passed"%(sum(c for _,c in res),len(res))); sys.exit(0 if all(c for _,c in res) else 1)

@@ -4,11 +4,15 @@
   var KEY = "esc_state";
   OE.loadState = function () {
     var s = {}; try { s = JSON.parse(localStorage.getItem(KEY) || "{}") || {}; } catch (e) {}
-    return { lang: s.lang || "", tech: s.tech || { first: "", last: "" }, screen: s.screen || "form", line: s.line === "ESA" ? "ESA" : "ESC" };
+    var named = !!(s.lang && s.tech && s.tech.first && s.tech.last);
+    return { lang: s.lang || "", tech: s.tech || { first: "", last: "" }, screen: s.screen || "form", line: s.line === "ESA" ? "ESA" : "ESC",
+      setupDone: s.setupDone != null ? !!s.setupDone : named, roleSet: !!s.roleSet };
   };
   OE.save = function () {
-    var S = OE.S; try { localStorage.setItem(KEY, JSON.stringify({ lang: S.lang, tech: S.tech, screen: S.screen === "result" ? "form" : S.screen, line: S.line === "ESA" ? "ESA" : "ESC" })); } catch (e) {}
+    var S = OE.S;
+    try { localStorage.setItem(KEY, JSON.stringify({ lang: S.lang, tech: S.tech, screen: S.screen === "result" ? "form" : S.screen, line: S.line === "ESA" ? "ESA" : "ESC", setupDone: !!S.setupDone, roleSet: !!S.roleSet })); } catch (e) {}
   };
+  OE.needsSetup = function () { return !!(OE._setupRedo || !(OE.S && OE.S.setupDone)); };
   function db() {
     return new Promise(function (ok, ko) {
       var r = indexedDB.open("esc_tool", 1);
