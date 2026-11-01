@@ -25,7 +25,8 @@
   if (cfg.sub && root.c.projecten && root.c.projecten.c["ESC-param"]) { root.c.projecten.c["ESC-param"].c.sub = new Dir("sub"); root.c.projecten.c["ESC-param"].c.sub.c["in.xml"]=new Fil("in.xml","a",Date.now()); }
   var srcDirs = {};
   var docs = new Dir("Documents");
-  function seed(key, files) { var d = srcDirs[key] || new Dir(key); srcDirs[key] = d; (files||[]).forEach(function(f){ addFile(d, f[0], f[1], f[2]); }); return d; }
+  function dirName(key) { return key === "downloads" ? "OSI-param" : key === "eeps" ? "EEPS Files" : key === "docs" ? "Documents" : key; }
+  function seed(key, files) { var d = srcDirs[key] || new Dir(dirName(key)); srcDirs[key] = d; (files||[]).forEach(function(f){ addFile(d, f[0], f[1], f[2]); }); return d; }
   function placeProgram(program, folderName, files) {
     if (!docs.c[program]) docs.c[program] = new Dir(program);
     if (!docs.c[program].c[folderName]) docs.c[program].c[folderName] = new Dir(folderName);
@@ -47,7 +48,7 @@
     if (id.indexOf("src-") === 0) {
       window.__log.push("picker:" + id);
       var key = id.slice(4);
-      if (!srcDirs[key]) srcDirs[key] = new Dir(key === "downloads" ? "OSI-param" : key === "eeps" ? "EEPS Files" : key === "docs" ? "Documents" : key);
+      if (!srcDirs[key]) srcDirs[key] = new Dir(dirName(key));
       return Promise.resolve(srcDirs[key]);
     }
     if (id === "esc-share" && sessionStorage.getItem("badShare") === "1") { sessionStorage.removeItem("badShare"); window.__log.push("picker"); return Promise.resolve(new Dir("NotAShare")); }
@@ -64,4 +65,19 @@
   Object.defineProperty(OE, "idbGet", { get:function(){ return function(k){ return Promise.resolve(store[k]); }; }, set:function(){} });
   Object.defineProperty(OE, "idbSet", { get:function(){ return function(k,v){ store[k]=v; if(k==="dir"||k==="dirs") sessionStorage.setItem("dirPicked","1"); return Promise.resolve(); }; }, set:function(){} });
   HTMLInputElement.prototype.click = function(){ window.__log.push("filepicker"); };
+  function startLabel(st) {
+    if (!st) return "";
+    if (typeof st === "string") return st;
+    if (docs.c.Pavis3 && docs.c.Pavis3.c.projects === st) return "Pavis3/projects";
+    if (docs.c.Pavis96NG && docs.c.Pavis96NG.c.Projects === st) return "Pavis96NG/Projects";
+    return st.name || "handle";
+  }
+  window.showOpenFilePicker = function(opts){
+    window.__log.push("filepicker");
+    window.__log.push("fileId:" + ((opts && opts.id) || ""));
+    var st = opts && opts.startIn;
+    window.__log.push("fileStart:" + startLabel(st));
+    var e = new Error("The user aborted a request."); e.name = "AbortError";
+    return Promise.reject(e);
+  };
 })();

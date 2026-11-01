@@ -20,6 +20,24 @@ OE.CFG = {
     { key: "docs", label: "Public Documents", hint: "C:\\Users\\Public\\Documents", startIn: "documents" },
     { key: "eeps", label: "EEPS", hint: "C:\\EEPS Files", startIn: "desktop" },
     { key: "downloads", label: "", hint: "", startIn: "downloads" } // picker opens in Downloads; the user must choose the OSI-param subfolder
+  ],
+  /* "Ander bestand kiezen" (showOpenFilePicker). First matching group wins.
+     id: Chrome picker id, one remembered folder per group (passed as "file-<id>").
+     line: "ESA" or "ESC".
+     families: catalog name or the typed "Ander…" name. prefixes: start of the family or submodel (TPB, ETS, PIL, EEP, …).
+     Leave both off to match the whole line (put that group last).
+     source / fallback: "downloads" = OSI-param handle, "eeps" = EEPS Files handle,
+     "program" = first discovered name in programs (the projects folder),
+     "last" = last source folder a parameter file was taken from on this line,
+     "param" = ESC-param or ESA-param. A missing handle tries the next step, then Documents. */
+  FILE_GROUPS: [
+    { id: "proline", line: "ESA", source: "downloads", fallback: "param" },
+    { id: "pavis", line: "ESC", source: "program", programs: ["Pavis3", "Pavis96NG"],
+      families: ["Kerberos", "Kentaur", "Charon", "Argus", "Geryon", "Orthos"],
+      prefixes: ["TPB", "ETS", "PIL", "FTS", "FGE", "HTS", "HSD", "HSB", "SRD", "STS", "Argus"],
+      fallback: ["last", "param"] },
+    { id: "eeps", line: "ESC", source: "eeps", families: [], prefixes: ["EEP"], fallback: ["last", "param"] },
+    { id: "esc", line: "ESC", source: "last", fallback: "param" }
   ]
 };
 OE.catalog = function () {
@@ -233,11 +251,13 @@ OE.HELP = {
       "• Nogmaals op 🔍 klikken of op ✕ (of Esc) sluit het zoeken. ‘Nieuw dossier’ maakt het formulier leeg. ‘↻ Vernieuwen’ leest de map opnieuw in (bv. na wijzigingen door collega’s via OneDrive).",
       "• Familie en submodel bepalen de bestandsnaam, niet een submap. Staat het model er niet bij? Kies ‘Ander…’.",
       "• Het dossiernummer zit in de bestandsnaam: spaties en tekens \\ / : * ? \" < > | worden ‘_’.",
-      "• Serienummer en ordernummer: op het typeplaatje van het toestel staat het serienummer na ‘S/N:’ en het ordernummer naast de datum. Op een ouder groen Kaba-protocol (Werkstattabnahmeprotokoll) is het serienummer de ‘Fabrik-Nr.’ en het ordernummer de ‘Auftrags-Nr.’. Zie het ⓘ-icoon naast de velden.",
+      "• Serienummer en ordernummer (enkel ESC): op het typeplaatje staat het serienummer na ‘S/N:’ en het ordernummer naast de datum. Op een ouder groen Kaba-protocol (Werkstattabnahmeprotokoll) is het serienummer de ‘Fabrik-Nr.’ en het ordernummer de ‘Auftrags-Nr.’. Zie het ⓘ-icoon naast de velden. Bij ESA (Proline) zijn die velden verborgen en niet verplicht; ze komen niet in de bestandsnaam, de PDF of het infobestand.",
       "• Bestaat het dossier al, dan kan je de gegevens laden.",
       "• Per dossier worden max. 3 parameterbestanden per bestandstype bewaard (bv. 3 × .xml en 3 × .cfg; .xml en .XML zijn hetzelfde type, bestanden zonder extensie vormen een eigen groep). Bij een 4e bestand van hetzelfde type wordt het oudste van dat type verwijderd (je krijgt eerst een melding). Het nieuwste van elk type is ‘actief bij laatste bezoek’.",
-      "• Bovenaan: ESA of ESC. ESA toont enkel ES250 Proline Easy, ES250/130 Proline, ES250/180 Proline, ES250/FST Proline, ES400 Proline en ES500 Proline (geen ESC-submodellen). ESC toont de bestaande toestellen. De keuze wordt onthouden.",
+      "• Bovenaan: ESA of ESC. ESA toont enkel ES250 Proline Easy, ES250/130 Proline, ES250/180 Proline, ES250/FST Proline, ES400 Proline en ES500 Proline (geen ESC-submodellen, geen serie- of ordernummer). ESC toont de bestaande toestellen. De keuze wordt onthouden.",
       "• ‘⬇ Laatste parameterfile ophalen’: kies één keer C:\\Users\\Public\\Documents. De app zoekt zelf elke programmamap met een submap ‘projects’ of ‘Projects’ (nu Pavis3\\projects en Pavis96NG\\Projects, later ook nieuwe) en leest die recursief. Optioneel: Downloads\\OSI-param en C:\\EEPS Files. ‘+ Map toevoegen’ voor een andere map, bv. Flap Control Center.",
+      "• ‘Ander bestand kiezen’ opent in de map van het gekozen toestel. Proline: Downloads\\OSI-param, anders ESA-param. Gallenschütz (Kerberos, ETS, PIL, TPB en gelijkaardige modellen): Pavis3\\projects of Pavis96NG\\Projects. EEP-modellen: EEPS Files. Anders de laatst gebruikte ESC-bronmap, anders ESC-param. Chrome onthoudt de map per groep.",
+      "• Bronmappen staan ingeklapt. Klik op ‘Bronmappen’ om ze te openen; open of dicht wordt onthouden. ‘Toestaan’ blijft zichtbaar als de browser opnieuw toestemming vraagt.",
       "• Enkel .xml, .prd, .dat, .kmc, .eep en .mot (hoofdletters maken niet uit). .mhx wordt nooit genomen. Het nieuwste bestand wordt voorgesteld. Bij Opslaan komt het bestand vlak in projecten\\ESC-param of projecten\\ESA-param, met de naam Familie_Submodel_Dossier_datum. Het origineel blijft staan.",
       "• iPhone/iPad: ‘Bestand kiezen’ uit Bestanden → Downloads. Deel of download daarna naar OneDrive ESC_Share of ESA_Share. Ruim Downloads zelf op. De adapter-wifi heeft geen internet; OneDrive uploadt pas als je weer online bent. De melding ‘open in Chrome’ blokkeert de iPhone niet.",
       "• Datum en tijd worden automatisch ingevuld.",
@@ -268,11 +288,13 @@ OE.HELP = {
       "• Un nouveau clic sur 🔍 ou sur ✕ (ou Échap) ferme la recherche. « Nouveau dossier » vide le formulaire. « ↻ Actualiser » relit le dossier (p. ex. après des modifications de collègues via OneDrive).",
       "• La famille et le sous-modèle déterminent le nom du fichier, pas un sous-dossier. Modèle absent ? Choisissez « Autre… ».",
       "• Le numéro de dossier fait partie du nom de fichier : les espaces et les caractères \\ / : * ? \" < > | deviennent « _ ».",
-      "• Numéro de série et numéro de commande : sur la plaque signalétique de l'appareil, le numéro de série suit « S/N: » et le numéro de commande se trouve à côté de la date. Sur un ancien protocole Kaba vert (Werkstattabnahmeprotokoll), le numéro de série est le « Fabrik-Nr. » et le numéro de commande l'« Auftrags-Nr. ». Voir l'icône ⓘ à côté des champs.",
+      "• Numéro de série et numéro de commande (ESC seulement) : sur la plaque signalétique, le numéro de série suit « S/N: » et le numéro de commande se trouve à côté de la date. Sur un ancien protocole Kaba vert (Werkstattabnahmeprotokoll), le numéro de série est le « Fabrik-Nr. » et le numéro de commande l'« Auftrags-Nr. ». Voir l'icône ⓘ à côté des champs. Pour ESA (Proline) ces champs sont masqués et non obligatoires ; ils n'entrent pas dans le nom de fichier, le PDF ni le fichier d'infos.",
       "• Si le dossier existe déjà, vous pouvez charger ses données.",
       "• Au maximum 3 fichiers de paramètres sont conservés par dossier et par type de fichier (p. ex. 3 × .xml et 3 × .cfg ; .xml et .XML sont le même type, les fichiers sans extension forment un groupe à part). Au 4e fichier d'un même type, le plus ancien de ce type est supprimé (avec avertissement préalable). Le plus récent de chaque type est « actif lors de la dernière visite ».",
-      "• En haut : ESA ou ESC. ESA n'affiche que ES250 Proline Easy, ES250/130 Proline, ES250/180 Proline, ES250/FST Proline, ES400 Proline et ES500 Proline (pas de sous-modèles ESC). ESC affiche les appareils existants. Le choix est mémorisé.",
+      "• En haut : ESA ou ESC. ESA n'affiche que ES250 Proline Easy, ES250/130 Proline, ES250/180 Proline, ES250/FST Proline, ES400 Proline et ES500 Proline (pas de sous-modèles ESC, pas de numéro de série ni de commande). ESC affiche les appareils existants. Le choix est mémorisé.",
       "• « ⬇ Récupérer le dernier fichier de paramètres » : choisissez une fois C:\\Users\\Public\\Documents. L'app trouve elle-même chaque dossier de programme qui contient « projects » ou « Projects » (aujourd'hui Pavis3\\projects et Pavis96NG\\Projects, plus tard aussi les nouveaux) et les lit récursivement. Facultatif : Téléchargements\\OSI-param et C:\\EEPS Files. « + Ajouter un dossier » pour un autre, p. ex. Flap Control Center.",
+      "• « Choisir un autre fichier » s'ouvre dans le dossier de l'appareil choisi. Proline : Téléchargements\\OSI-param, sinon ESA-param. Gallenschütz (Kerberos, ETS, PIL, TPB et modèles semblables) : Pavis3\\projects ou Pavis96NG\\Projects. Modèles EEP : EEPS Files. Sinon le dernier dossier source ESC utilisé, sinon ESC-param. Chrome mémorise le dossier par groupe.",
+      "• Les dossiers source sont repliés. Cliquez sur « Dossiers source » pour les ouvrir ; l'état est mémorisé. « Autoriser » reste visible si le navigateur redemande l'autorisation.",
       "• Uniquement .xml, .prd, .dat, .kmc, .eep et .mot (majuscules ou minuscules). .mhx n'est jamais pris. Le fichier le plus récent est proposé. À l'enregistrement le fichier est à plat dans projecten\\ESC-param ou projecten\\ESA-param, nommé Famille_Sous-modèle_Dossier_date. L'original reste.",
       "• iPhone/iPad : « Choisir un fichier » depuis Fichiers → Téléchargements. Partagez ou téléchargez ensuite vers OneDrive ESC_Share ou ESA_Share. Videz Téléchargements vous-même. Le Wi-Fi de l'adaptateur n'a pas Internet ; OneDrive envoie les fichiers quand vous êtes de nouveau en ligne. L'avertissement « ouvrir dans Chrome » ne bloque pas l'iPhone.",
       "• La date et l'heure sont remplies automatiquement.",

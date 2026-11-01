@@ -386,15 +386,15 @@
       '<div id="subRow"' + (esa() ? " hidden" : "") + '><label class="lbl" for="sub">' + x.sub + ' *</label><select id="sub"></select><input id="subO" class="oth" placeholder="' + esc(x.otherPh) + '" hidden></div>' +
       '<label class="lbl" for="dos">' + x.dossier + ' *</label><input id="dos" autocomplete="off" spellcheck="false" placeholder="' + esc(x.dossierPh) + '"><p class="hint" id="dosN"></p>' +
       '<div id="exist"></div>' +
-      '<div class="two"><div><div class="lblrow"><label class="lbl" for="ser">' + x.serial + ' *</label>' + INFO(x) + '</div><input id="ser" autocomplete="off" spellcheck="false"></div>' +
-      '<div><div class="lblrow"><label class="lbl" for="ord">' + x.order + ' *</label>' + INFO(x) + '</div><input id="ord" autocomplete="off" spellcheck="false"></div></div>' +
+      (esa() ? "" : '<div class="two" id="numRow"><div><div class="lblrow"><label class="lbl" for="ser">' + x.serial + ' *</label>' + INFO(x) + '</div><input id="ser" autocomplete="off" spellcheck="false"></div>' +
+      '<div><div class="lblrow"><label class="lbl" for="ord">' + x.order + ' *</label>' + INFO(x) + '</div><input id="ord" autocomplete="off" spellcheck="false"></div></div>') +
       (mem.sel ? exFilesHtml(x, mem.sel.files) : "") + '<label class="lbl" for="file">' + x.file + ' *</label><label class="drop" id="drop"><input type="file" id="file"' + (ios ? "" : "") + '><span id="fileT"></span></label>' +
       (ios ? '<p class="ioshint" id="iosHint">' + esc(OE.fmt(x.iosHint, { s: OE.fs.shareName() })) + "</p>" : "") +
       '<button type="button" class="btn sec latest" id="latest">' + (ios ? x.iosPick : x.latest) + '</button><div id="latestBox" class="latestbox"></div>' +
       (ios ? "" : '<div class="src" id="srcBox"></div>') +
       '<label class="lbl">' + x.dateNow + '</label><div class="now" id="now"></div>' +
-      '</div><div class="col side"><figure class="prod" id="prod"></figure><p class="hint" id="pathP"></p></div></div>' +
-      '<div id="err"></div><div class="btns"><button class="btn pri" id="save">' + x.save + "</button></div>";
+      '</div><div class="col side"><figure class="prod" id="prod"></figure><div class="btns underphoto"><button class="btn pri" id="save">' + x.save + '</button></div><p class="hint" id="pathP"></p></div></div>' +
+      '<div id="err"></div>';
     var fam = $("fam"), sub = $("sub");
     function fillSubs() {
       if (esa()) { f.sub = f.fam && f.fam !== C.OTHER ? f.fam : ""; return; }
@@ -426,14 +426,15 @@
         $("exist").innerHTML = '<div class="okmsg found" id="found"><b>' + x.existH + "</b><br>" + esc(OE.fmt(x.existP, { f: fn, d: OE.safeName(f.dossier), t: m.updatedHuman || "" })) +
           '<div class="btns"><button class="btn ok" id="load">' + x.existLoad + "</button></div></div>";
         OE.bind("load", function () {
-          f.serial = m.serial || ""; f.order = m.order || ""; $("ser").value = f.serial; $("ord").value = f.order;
+          f.serial = m.serial || ""; f.order = m.order || ""; if ($("ser")) { $("ser").value = f.serial; $("ord").value = f.order; }
           if (m.submodel && !esa()) { var l = cat[f.fam] || []; if (l.some(function (s) { return s.id === m.submodel; })) f.sub = m.submodel; else { f.sub = C.OTHER; f.subOther = m.submodel; $("subO").value = f.subOther; } sub.value = f.sub; }
           $("exist").innerHTML = '<div class="okmsg" id="loaded">✓ ' + x.loaded + "</div>" + exFilesHtml(x, m.files); upd();
         });
       });
     }
     mem.lastCheck = null; fam.value = f.fam; fillSubs();
-    $("famO").value = f.famOther; $("subO").value = f.subOther; $("dos").value = f.dossier; $("ser").value = f.serial; $("ord").value = f.order;
+    $("famO").value = f.famOther; $("subO").value = f.subOther; $("dos").value = f.dossier;
+    if ($("ser")) { $("ser").value = f.serial; $("ord").value = f.order; }
     function unsel() { if (mem.sel) { mem.sel = null; var e = $("exFiles"); if (e) e.remove(); drawSearch(); } }
     fam.onchange = function () { unsel(); f.fam = fam.value; f.sub = esa() ? (f.fam || "") : ""; fillSubs(); upd(); checkExisting(); };
     sub.onchange = function () { f.sub = sub.value; upd(); };
@@ -442,8 +443,8 @@
     $("subO").oninput = function () { f.subOther = this.value; upd(); };
     $("dos").oninput = function () { unsel(); f.dossier = this.value; upd(); };
     $("dos").onchange = checkExisting;
-    $("ser").oninput = function () { f.serial = this.value; };
-    $("ord").oninput = function () { f.order = this.value; };
+    if ($("ser")) $("ser").oninput = function () { f.serial = this.value; };
+    if ($("ord")) $("ord").oninput = function () { f.order = this.value; };
     $("file").onchange = function () { if (this.files[0]) { f.file = this.files[0]; upd(); } };
     var dr = $("drop");
     dr.ondragover = function (e) { e.preventDefault(); dr.classList.add("over"); };
@@ -478,10 +479,14 @@
       return "<li><span><b>" + esc(p.name) + "</b><small>" + esc(p.name + "\\" + p.folder) + "</small></span><span class=\"srca ok\">✓</span></li>";
     }).join("");
     var warn = F.issue && F.issue.code !== "share" ? '<div class="err" id="pickWarn">' + esc(issueText(F.issue)) + "</div>" : "";
-    box.innerHTML = (F._pending ? '<button type="button" class="btn sec" id="renewAll">' + esc(x.folderRenew) + "</button>" : "") + warn +
-      '<div class="lbl" style="margin-top:0">' + esc(x.srcH) + '</div><ul class="list" id="srcList">' + rows + "</ul>" +
+    var open = !!OE.S.srcOpen;
+    var body = warn + '<ul class="list" id="srcList">' + rows + "</ul>" +
       (prog ? '<div class="lbl">' + esc(x.srcFound) + '</div><ul class="list" id="progList">' + prog + "</ul>" : "") +
       '<button type="button" class="small" id="srcAdd">' + esc(x.srcAdd) + "</button>";
+    box.innerHTML = (F._pending ? '<button type="button" class="btn sec" id="renewAll">' + esc(x.folderRenew) + "</button>" : "") +
+      '<button type="button" class="stog' + (open ? " on" : "") + '" id="srcTog" aria-expanded="' + (open ? "true" : "false") + '" aria-controls="srcBody">' + esc(x.srcH) + "</button>" +
+      '<div id="srcBody"' + (open ? "" : " hidden") + ">" + body + "</div>";
+    $("srcTog").onclick = function () { OE.S.srcOpen = !OE.S.srcOpen; OE.save(); drawSources(OE.t()); };
     [].forEach.call(box.querySelectorAll("[data-allow]"), function (b) {
       b.onclick = function () { F.allowSource(b.getAttribute("data-allow")).then(function () { drawSources(OE.t()); }, OE.pickerFail); };
     });
@@ -490,6 +495,21 @@
     });
     OE.bind("srcAdd", function () { F.addSource().then(function () { drawSources(OE.t()); }, OE.pickerFail); });
     OE.bind("renewAll", function () { F.renewAll().then(function () { drawSources(OE.t()); }, OE.pickerFail); });
+  }
+  function pickManualFile(onFile) {
+    if (OE.ios && OE.ios() || typeof window.showOpenFilePicker !== "function") { try { $("file").click(); } catch (e2) {} return; }
+    var t = OE.fs.fileTarget ? OE.fs.fileTarget(mem.form) : { id: "file-esc", starts: ["documents"] };
+    var starts = t.starts && t.starts.length ? t.starts : ["documents"];
+    function attempt(i) {
+      return window.showOpenFilePicker({ id: t.id, startIn: starts[i], multiple: false }).catch(function (e) {
+        var handleFailed = starts[i] && typeof starts[i] !== "string" && (!e || e.name !== "AbortError");
+        if (handleFailed && i + 1 < starts.length) return attempt(i + 1);
+        throw e;
+      });
+    }
+    attempt(0).then(function (hs) { return hs && hs[0] ? hs[0].getFile() : null; }).then(function (file) {
+      if (file && onFile) onFile(file);
+    }, function (e) { OE.pickerFail(e); });
   }
   function latestParam(x, use) {
     var F = OE.fs, box = $("latestBox");
@@ -500,9 +520,9 @@
     var ready = F.root && F.state === "granted" ? F.ensure().then(function (ok) { return ok || F.renew().then(function () { return true; }); }) : F.renew().then(function () { return true; });
     box.innerHTML = '<p class="hint">' + esc(x.latestBusy) + "</p>";
     ready.then(function () { return F.newestSource(); }).then(function (l) {
-      if (!l.length) { box.innerHTML = '<p class="hint" id="latestNone">' + esc(x.latestNone) + "</p>"; try { $("file").click(); } catch (e) {} return; }
+      if (!l.length) { box.innerHTML = '<p class="hint" id="latestNone">' + esc(x.latestNone) + "</p>"; pickManualFile(use); return; }
       function row(p, i) { return '<button type="button" data-li="' + i + '"><span><b>' + esc(p.name) + "</b></span><small>" + esc(p.srcLabel || "") + " · " + hm(p.time) + " · " + kb(p.size) + "</small></button>"; }
-      function done(p) { box.innerHTML = ""; use(p.file); }
+      function done(p) { if (p.dir && F.rememberSource) F.rememberSource(p.dir); else if (p.dir) F.lastSource = p.dir; box.innerHTML = ""; use(p.file); }
       if (l.length === 1) {
         box.innerHTML = '<div class="latestone"><small>' + esc(x.latestOne) + '</small><div class="wolist" id="latestList">' + row(l[0], 0) + "</div>" +
           '<div class="btns"><button type="button" class="small" id="latestOther">' + esc(x.latestOther) + '</button><button type="button" class="btn ok" id="latestUse">' + esc(x.latestUse) + "</button></div></div>";
@@ -511,7 +531,7 @@
         box.innerHTML = '<small>' + esc(x.latestMany) + '</small><div class="wolist" id="latestList">' + l.map(row).join("") + '</div><button type="button" class="small" id="latestOther">' + esc(x.latestOther) + "</button>";
       }
       [].forEach.call(box.querySelectorAll("[data-li]"), function (b) { b.onclick = function () { done(l[+b.dataset.li]); }; });
-      OE.bind("latestOther", function () { box.innerHTML = ""; $("file").click(); });
+      OE.bind("latestOther", function () { box.innerHTML = ""; pickManualFile(use); });
     }).catch(function (e) {
       if (e && e.message === "denied") { box.innerHTML = '<div class="err">' + esc(x.folderDenied) + "</div>"; return; }
       box.innerHTML = '<div class="err">' + esc(OE.fmt(x.latestErr, { e: (e && e.message) || e })) + "</div>";
@@ -522,8 +542,10 @@
   function save(x, f) {
     var fn = famName(f), sn = subName(f), F = OE.fs, missing = [];
     if (esa() && fn) sn = fn;
-    [[fn, esa() ? x.system : x.family], [sn, esa() ? x.system : x.sub], [OE.safeName(f.dossier), x.dossier], [f.serial.trim(), x.serial], [f.order.trim(), x.order], [f.file, x.needFile]]
-      .forEach(function (p) { if (!p[0]) missing.push(p[1]); });
+    var req = [[fn, esa() ? x.system : x.family], [sn, esa() ? x.system : x.sub], [OE.safeName(f.dossier), x.dossier]];
+    if (!esa()) req.push([f.serial.trim(), x.serial], [f.order.trim(), x.order]);
+    req.push([f.file, x.needFile]);
+    req.forEach(function (p) { if (!p[0]) missing.push(p[1]); });
     if (missing.length) { OE.err(OE.fmt(x.need, { f: missing.join(", ") })); return; }
     OE.err("");
     var now = new Date(), pname = F.paramName(fn, sn, f.dossier, now, f.file.name);
@@ -551,10 +573,11 @@
       })
       .then(function (files) {
         r.files = files; r.pdfName = F.pdfName(fn, sn, f.dossier);
-        var meta = { app: C.APP, family: fn, submodel: sn, dossier: OE.safeName(f.dossier), dossierInput: f.dossier, serial: f.serial.trim(), order: f.order.trim(),
+        var meta = { app: C.APP, family: fn, submodel: sn, dossier: OE.safeName(f.dossier), dossierInput: f.dossier,
           technician: S.tech.first + " " + S.tech.last, updated: now.toISOString(), updatedHuman: OE.human(now), pdf: r.pdfName, files: files };
+        if (!esa()) { meta.serial = f.serial.trim(); meta.order = f.order.trim(); }
         return (img ? OE.loadImage(modelSrc(img)).catch(function () { return null; }) : Promise.resolve(null)).then(function (im) {
-          var blob = OE.buildPdf({ family: fn, sub: sn, dossier: OE.safeName(f.dossier), serial: meta.serial, order: meta.order, tech: meta.technician, updated: now, files: files, img: im, example: example });
+          var blob = OE.buildPdf({ family: fn, sub: sn, dossier: OE.safeName(f.dossier), serial: meta.serial || "", order: meta.order || "", noNumbers: esa(), tech: meta.technician, updated: now, files: files, img: im, example: example });
           mem.pdfBlob = blob;
           return F.write(dir, r.pdfName, blob).then(function () { return F.write(dir, F.metaName(fn, sn, f.dossier), new Blob([JSON.stringify(meta, null, 2)], { type: "application/json" })); });
         });
@@ -570,7 +593,7 @@
     b.disabled = true; b.textContent = x.saving; OE.busy = true;
     var files = [{ name: pname, stamp: OE.stamp(now), ext: OE.fs.extKey(pname) }];
     (img ? OE.loadImage(modelSrc(img)).catch(function () { return null; }) : Promise.resolve(null)).then(function (im) {
-      var blob = OE.buildPdf({ family: fn, sub: sn, dossier: OE.safeName(f.dossier), serial: f.serial.trim(), order: f.order.trim(), tech: S.tech.first + " " + S.tech.last, updated: now, files: files, img: im, example: example });
+      var blob = OE.buildPdf({ family: fn, sub: sn, dossier: OE.safeName(f.dossier), serial: esa() ? "" : f.serial.trim(), order: esa() ? "" : f.order.trim(), noNumbers: esa(), tech: S.tech.first + " " + S.tech.last, updated: now, files: files, img: im, example: example });
       mem.pdfBlob = blob;
       var pdfName = OE.fs.pdfName(fn, sn, f.dossier);
       mem.shareFiles = [new File([f.file], pname, { type: f.file.type || "application/octet-stream" }), new File([blob], pdfName, { type: "application/pdf" })];

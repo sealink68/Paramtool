@@ -34,8 +34,9 @@
       font("bold", 12.5); var ls = doc.splitTextToSize(clean(value || "—"), colW);
       ls.forEach(function (l) { doc.text(l, M, y); y += 5.6; }); y += 3.2;
     }
-    field(P.family, d.family); field(P.sub, d.sub); field(P.dossier, d.dossier); field(P.serial, d.serial);
-    field(P.order, d.order); field(P.tech, d.tech); field(P.updated, OE.human(d.updated));
+    field(P.family, d.family); field(P.sub, d.sub); field(P.dossier, d.dossier);
+    if (!d.noNumbers) { field(P.serial, d.serial); field(P.order, d.order); }
+    field(P.tech, d.tech); field(P.updated, OE.human(d.updated));
     y = Math.max(y, imgTop + 95) + 4;
     doc.setDrawColor(C.li[0], C.li[1], C.li[2]); doc.setLineWidth(0.3); doc.line(M, y - 5, W - M, y - 5);
     font("bold", 11.5); doc.text(clean(P.files), M, y); y += 8;

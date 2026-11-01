@@ -108,6 +108,67 @@
     if (!F.picked) return "";
     return F.shareName() + "\\" + C.SUBDIR + "\\" + F.paramDirName();
   };
+  /* Last source directory a parameter file was taken from, per ESA/ESC line. */
+  F.lastByLine = { ESC: null, ESA: null };
+  F.rememberSource = function (dir) {
+    if (!dir) return;
+    F.lastSource = dir;
+    F.lastByLine[F.line()] = dir;
+  };
+  function sourceHandle(key) {
+    var h = null;
+    (F.sources || []).forEach(function (s) { if (s.key === key && s.handle) h = s.handle; });
+    return h;
+  }
+  function programHandle(names) {
+    var list = names || [];
+    for (var i = 0; i < list.length; i++) {
+      var want = String(list[i]).toLowerCase(), hit = null;
+      (F.programs || []).forEach(function (p) {
+        if (!hit && p.handle && String(p.name).toLowerCase() === want) hit = p.handle;
+      });
+      if (hit) return hit;
+    }
+    return null;
+  }
+  function placeOf(step, group) {
+    if (step === "downloads" || step === "eeps" || step === "docs") return sourceHandle(step);
+    if (step === "program") return programHandle(group.programs);
+    if (step === "last") return F.lastByLine[F.line()] || null;
+    if (step === "param") return F.root || null;
+    if (step === "documents" || step === "desktop") return step;
+    return null;
+  }
+  /* Where "Ander bestand kiezen" opens. { id, starts } from CFG.FILE_GROUPS. starts[0] is the best handle. */
+  F.fileTarget = function (form) {
+    var line = F.line(), fam = "", sub = "";
+    if (form) {
+      fam = form.fam === C.OTHER ? String(form.famOther || "").trim() : String(form.fam || "");
+      sub = form.sub === C.OTHER ? String(form.subOther || "").trim() : String(form.sub || "");
+    }
+    var groups = C.FILE_GROUPS || [], g = null;
+    for (var i = 0; i < groups.length && !g; i++) {
+      var cand = groups[i];
+      if (cand.line && cand.line !== line) continue;
+      var fams = cand.families || [], prefs = cand.prefixes || [];
+      if (!fams.length && !prefs.length) { g = cand; break; }
+      var famHit = fam && fams.some(function (n) { return String(n).toLowerCase() === fam.toLowerCase(); });
+      var preHit = prefs.some(function (p) {
+        var u = String(p).toUpperCase();
+        return (sub && sub.toUpperCase().indexOf(u) === 0) || (fam && fam.toUpperCase().indexOf(u) === 0);
+      });
+      if (famHit || preHit) g = cand;
+    }
+    if (!g) g = { id: line === "ESA" ? "proline" : "esc", source: "param", fallback: "documents" };
+    var steps = [g.source].concat(g.fallback ? (Array.isArray(g.fallback) ? g.fallback : [g.fallback]) : []);
+    var starts = [];
+    steps.forEach(function (step) {
+      var h = placeOf(step, g);
+      if (h && starts.indexOf(h) < 0) starts.push(h);
+    });
+    if (!starts.length || starts[starts.length - 1] !== "documents") starts.push("documents");
+    return { id: "file-" + (g.id || "esc"), starts: starts };
+  };
 
   /* Source folders (IndexedDB handles). Defaults are suggestions; the user must pick each one once. */
   F.sources = [];
