@@ -43,8 +43,16 @@
   window.__root = root; window.__roots = { ESC: root, ESA: esa }; window.__sources = srcDirs;
   window.showDirectoryPicker = function(opts){
     var id = (opts && opts.id) || "";
-    if (id.indexOf("src-") === 0) { window.__log.push("picker:" + id); var key = id.slice(4); if (!srcDirs[key]) srcDirs[key] = new Dir(key); return Promise.resolve(srcDirs[key]); }
+    window.__log.push("start:" + (opts && opts.startIn ? (typeof opts.startIn === "string" ? opts.startIn : "handle") : ""));
+    if (id.indexOf("src-") === 0) {
+      window.__log.push("picker:" + id);
+      var key = id.slice(4);
+      if (!srcDirs[key]) srcDirs[key] = new Dir(key === "downloads" ? "OSI-param" : key === "eeps" ? "EEPS Files" : key === "docs" ? "Documents" : key);
+      return Promise.resolve(srcDirs[key]);
+    }
+    if (id === "esc-share" && sessionStorage.getItem("badShare") === "1") { sessionStorage.removeItem("badShare"); window.__log.push("picker"); return Promise.resolve(new Dir("NotAShare")); }
     window.__log.push("picker");
+    window.__log.push("picker:" + id);
     if (id === "esa-share") return Promise.resolve(esa);
     return Promise.resolve(root);
   };

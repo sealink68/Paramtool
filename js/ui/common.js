@@ -118,8 +118,9 @@
     var title = both ? "Help / Aide" : H.title, close = both ? OE.HELP.nl.close + " / " + OE.HELP.fr.close : H.close;
     var body = both ? "<h3>Nederlands</h3>" + helpBody("nl", sc) + "<h3>Français</h3>" + helpBody("fr", sc) : helpBody(L, sc);
     var redo = both ? "Setup opnieuw / Reconfigurer" : OE.T[L].wizRedo;
+    var banner = OE.setupBanner ? OE.setupBanner() : "";
     m.innerHTML = '<div class="card hlp" id="hlp" role="dialog" aria-modal="true" aria-labelledby="hlph"><div class="hh"><h2 id="hlph">' + OE.esc(title) + '</h2><button type="button" class="hx" id="hlpx" aria-label="' + OE.esc(close) + '">×</button></div>' +
-      body + '<p><a class="linkb" id="setupBat" href="ESC_tool_setup.bat" download>ESC_tool_setup.bat</a></p><div class="btns"><button type="button" class="btn sec" id="reSetup">' + OE.esc(redo) + '</button><button type="button" class="btn sec" id="hlpc">' + OE.esc(close) + "</button></div></div>";
+      banner + body + '<div class="btns"><button type="button" class="btn sec" id="reSetup">' + OE.esc(redo) + '</button><button type="button" class="btn sec" id="hlpc">' + OE.esc(close) + "</button></div></div>";
     m.hidden = false; m.dataset.help = "1";
     function shut() { m.hidden = true; m.dataset.help = ""; m.onclick = null; document.removeEventListener("keydown", key); }
     function key(e) { if (e.key === "Escape") shut(); }

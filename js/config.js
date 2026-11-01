@@ -18,7 +18,7 @@ OE.CFG = {
   /* docs: one pick of Public Documents; program folders (Pavis3\\projects, …) are discovered. eeps and downloads are optional. */
   SOURCES: [
     { key: "docs", label: "Public Documents", hint: "C:\\Users\\Public\\Documents", startIn: "documents" },
-    { key: "eeps", label: "EEPS", hint: "C:\\EEPS Files", startIn: "documents" },
+    { key: "eeps", label: "EEPS", hint: "C:\\EEPS Files", startIn: "desktop" },
     { key: "downloads", label: "", hint: "", startIn: "downloads" } // picker opens in Downloads; the user must choose the OSI-param subfolder
   ]
 };
@@ -39,6 +39,7 @@ OE.T = {
     first: "Voornaam", last: "Achternaam", firstPh: "bv. Jan", lastPh: "bv. Peeters", needName: "Vul voor- en achternaam in.",
     techStart: "Verder", techSave: "Opslaan", back: "Terug",
     wizFirst: "Voornaam", wizLast: "Naam", wizRole: "Ben je een ESA- of ESC-technieker?",
+    wizAlready: "Al gedaan, verder / Déjà fait, continuer",
     wizLang: "Taal", wizNext: "Verder", wizDone: "Klaar", wizSkip: "Overslaan",
     wizShare: "Kies de hoofdmap {s}.", wizShareOk: "{s} is gekozen. De map projecten\\{p} wordt aangemaakt.",
     wizDocs: "Bronmap op deze pc", wizDocsP: "Kies één keer C:\\Users\\Public\\Documents. Pavis en andere programmappen worden zelf gevonden. Optioneel: Downloads\\OSI-param (niet de map Downloads zelf) en C:\\EEPS Files.",
@@ -49,6 +50,13 @@ OE.T = {
     folderH: "Map kiezen", folderP: "Kies één keer de hoofdmap ‘{s}’. De app maakt zelf projecten en {p} aan. ESC en ESA mag je allebei kiezen; ze blijven bewaard.",
     shareNow: "Doelmap: {s}\\projecten\\{p}",
     folderPick: "📁 {s} kiezen", folderChange: "📁 {s} wijzigen", folderOther: "Ook {s} kiezen",
+    hintDocs: "Kies links Openbare documenten (C:\\Users\\Public\\Documents).",
+    hintShare: "Verwachte map: %USERPROFILE%\\OneDrive - dormakaba Group\\{s}.",
+    hintEeps: "Kies C:\\EEPS Files. De kiezer opent op het bureaublad.",
+    shareBad: "De gekozen map heet ‘{got}’, niet ‘{expect}’. Kies opnieuw.",
+    docsBad: "In deze map staan geen Pavis-mappen (zoals Pavis3\\projects). Kies links Openbare documenten (C:\\Users\\Public\\Documents).",
+    eepsBad: "De gekozen map heet ‘{got}’, niet ‘EEPS Files’. Kies opnieuw C:\\EEPS Files.",
+    osiBad: "De gekozen map heet ‘{got}’, niet ‘OSI-param’. Kies de submap Downloads\\OSI-param.",
     folderRenew: "Toestaan",
     folderRenewP: "De browser vraagt opnieuw toestemming. Eén keer ‘Toestaan’ geldt voor alle bewaarde mappen.",
     folderNow: "Gekozen map", folderUse: "projecten-map", folderOk: "Verder naar formulier",
@@ -120,6 +128,13 @@ OE.T = {
     folderH: "Choisir le dossier", folderP: "Choisissez une seule fois le dossier racine « {s} ». L'app crée elle-même projecten et {p}. Vous pouvez choisir ESC et ESA ; les deux sont mémorisés.",
     shareNow: "Dossier cible : {s}\\projecten\\{p}",
     folderPick: "📁 Choisir {s}", folderChange: "📁 Changer {s}", folderOther: "Choisir aussi {s}",
+    hintDocs: "Choisissez à gauche Documents publics (C:\\Users\\Public\\Documents).",
+    hintShare: "Dossier attendu : %USERPROFILE%\\OneDrive - dormakaba Group\\{s}.",
+    hintEeps: "Choisissez C:\\EEPS Files. Le sélecteur s'ouvre sur le bureau.",
+    shareBad: "Le dossier choisi s'appelle « {got} », pas « {expect} ». Choisissez à nouveau.",
+    docsBad: "Ce dossier ne contient pas de dossiers Pavis (comme Pavis3\\projects). Choisissez à gauche Documents publics (C:\\Users\\Public\\Documents).",
+    eepsBad: "Le dossier choisi s'appelle « {got} », pas « EEPS Files ». Choisissez à nouveau C:\\EEPS Files.",
+    osiBad: "Le dossier choisi s'appelle « {got} », pas « OSI-param ». Choisissez le sous-dossier Téléchargements\\OSI-param.",
     folderRenew: "Autoriser",
     folderRenewP: "Le navigateur redemande l'autorisation. Un seul « Autoriser » vaut pour tous les dossiers enregistrés.",
     folderNow: "Dossier choisi", folderUse: "dossier projecten", folderOk: "Continuer vers le formulaire",

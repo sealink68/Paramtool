@@ -58,14 +58,26 @@
     return F.loadSources().then(function () { return F.bindLine(); }).then(function () { return F.ensureAllShares(); })
       .then(function () { return F.discover(); }).then(function () { return F.refreshPerm(); }).then(function () { return F.state; });
   };
+  function openPicker(o) {
+    return window.showDirectoryPicker(o).catch(function (e) {
+      if (o.startIn && typeof o.startIn !== "string") return window.showDirectoryPicker({ id: o.id, mode: o.mode, startIn: "documents" });
+      throw e;
+    });
+  }
+  F.shareStart = function (which) {
+    var map = F._dirs || {}, other = which === "ESA" ? map.ESC : map.ESA;
+    return other || map[which] || "documents";
+  };
   F.pick = function (line) { // must run inside a user gesture; line defaults to the active ESA/ESC switch
     var which = line === "ESA" || line === "ESC" ? line : F.line();
     var id = which === "ESA" ? "esa-share" : "esc-share";
-    return window.showDirectoryPicker({ id: id, mode: "readwrite" }).then(function (h) {
+    return openPicker({ id: id, mode: "readwrite", startIn: F.shareStart(which) }).then(function (h) {
       return perm(h, true).then(function (p) {
         if (p !== "granted") throw new Error("denied");
         var map = F._dirs || {}; map[which] = h;
-        return saveDirs(map).then(function () { return which === F.line() ? useHandle(h) : ensureShare(h, which); });
+        var issue = h.name !== C.SHARES[which] ? { code: "share", got: h.name, expect: C.SHARES[which] } : null;
+        F.issue = issue;
+        return saveDirs(map).then(function () { return which === F.line() ? useHandle(h) : ensureShare(h, which); }).then(function () { return { handle: h, issue: issue }; });
       });
     });
   };
@@ -122,22 +134,31 @@
     });
     return OE.idbSet("sources", rows).catch(function () {});
   }
-  F.allowSource = function (key) { // user gesture
+  function sourceIssue(key, h) {
+    if (key === "eeps" && h.name !== "EEPS Files") return { code: "eeps", got: h.name };
+    if (key === "downloads" && h.name !== "OSI-param") return { code: "osi", got: h.name };
+    return null;
+  }
+  F.allowSource = function (key) { // user gesture. id is stable so Chrome remembers each picker.
     var s = null; F.sources.forEach(function (x) { if (x.key === key) s = x; });
     if (!s) return Promise.reject(new Error("source"));
-    var o = { id: "src-" + key, mode: "readwrite" };
-    if (s.startIn) o.startIn = s.startIn;
-    return window.showDirectoryPicker(o).then(function (h) {
+    var o = { id: "src-" + key, mode: "readwrite", startIn: s.startIn || "documents" };
+    return openPicker(o).then(function (h) {
       return perm(h, true).then(function (p) {
         if (p !== "granted") throw new Error("denied");
         s.handle = h; if (!s.label) s.label = h.name;
-        return persistSources().then(function () { return s.key === "docs" ? F.discover() : null; }).then(function () { return F.refreshPerm(); }).then(function () { return s; });
+        return persistSources().then(function () { return s.key === "docs" ? F.discover() : null; }).then(function () {
+          var issue = sourceIssue(s.key, h);
+          if (s.key === "docs" && !(F.programs || []).some(function (pr) { return /pavis/i.test(pr.name); })) issue = { code: "docs" };
+          F.issue = issue;
+          return F.refreshPerm();
+        }).then(function () { return { handle: h, issue: F.issue }; });
       });
     });
   };
   F.addSource = function () { // user gesture, any extra folder (Flap Control Center, …)
     var key = "c" + Date.now();
-    return window.showDirectoryPicker({ id: "src-" + key, mode: "readwrite" }).then(function (h) {
+    return openPicker({ id: "src-" + key, mode: "readwrite", startIn: "documents" }).then(function (h) {
       return perm(h, true).then(function (p) {
         if (p !== "granted") throw new Error("denied");
         var s = { key: key, label: h.name, hint: "", startIn: "", custom: true, handle: h };

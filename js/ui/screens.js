@@ -39,6 +39,22 @@
     if (L === "nl" || L === "fr") return OE.T[L][k];
     return OE.T.nl[k] + " / " + OE.T.fr[k];
   }
+  function srcHint(key) {
+    var x = OE.t();
+    if (key === "docs") return x.hintDocs;
+    if (key === "eeps") return x.hintEeps;
+    if (key === "downloads") return x.srcDownHint;
+    return "";
+  }
+  function issueText(issue) {
+    var x = OE.t();
+    if (!issue) return "";
+    if (issue.code === "share") return OE.fmt(x.shareBad, issue);
+    if (issue.code === "docs") return x.docsBad;
+    if (issue.code === "eeps") return OE.fmt(x.eepsBad, issue);
+    if (issue.code === "osi") return OE.fmt(x.osiBad, issue);
+    return "";
+  }
   function resumeStep() {
     var S = OE.S;
     if (!(S.tech && S.tech.first)) return "first";
@@ -64,18 +80,18 @@
   function wizFrame(n, total, inner) {
     return '<div class="narrow" id="wiz" data-step="' + mem.wiz.step + '"><p class="wstep">' + esc(OE.fmt(W("wizStep"), { n: n, t: total })) + "</p>" + inner + "</div>";
   }
-  function batLink() {
+  function setupBanner() {
     if (OE.ios && OE.ios()) return "";
-    var x = OE.S.lang ? OE.t() : null;
-    var label = x ? x.wizBat : "ESC_tool_setup.bat";
-    var hint = x ? x.wizBatH : "";
-    return '<p class="hint"><a class="linkb" id="setupBat" href="ESC_tool_setup.bat" download>' + esc(label) + "</a>" + (hint ? "<br>" + esc(hint) : "") + "</p>";
+    return '<div class="batban" id="setupBanner"><a class="btn pri big" id="setupBat" href="ESC_tool_setup.bat" download>Stap 1: Download en start ESC_tool_setup.bat<small>Étape 1 : Télécharger et lancer ESC_tool_setup.bat</small></a>' +
+      '<p class="hint">NL: Maakt de mappen en een bureaubladsnelkoppeling. Chrome: ‘Behouden’. SmartScreen: ‘Meer info’ &gt; ‘Toch uitvoeren’.<br>FR: Crée les dossiers et un raccourci sur le bureau. Chrome : « Conserver ». SmartScreen : « Informations complémentaires » &gt; « Exécuter quand même ».</p></div>';
   }
+  OE.setupBanner = setupBanner;
+  function batLink() { return setupBanner(); }
   SC.setup = function () {
     if (!mem.wiz || !mem.wiz.step) mem.wiz = { step: OE._setupRedo ? "first" : resumeStep() };
     var S = OE.S, step = mem.wiz.step, x = OE.S.lang ? OE.t() : null, F = OE.fs;
     if (step === "first") {
-      $("card").innerHTML = wizFrame(1, 4, '<h2 class="q">' + esc(W("wizFirst")) + '</h2><label class="lbl" for="fn">' + esc(W("wizFirst")) + '</label><input id="fn" autocomplete="given-name" value="' + esc(S.tech.first || "") + '"><div id="err"></div><div class="btns"><button class="btn pri" id="wizNext">' + esc(W("wizNext")) + "</button></div>");
+      $("card").innerHTML = wizFrame(1, 4, setupBanner() + '<h2 class="q">' + esc(W("wizFirst")) + '</h2><label class="lbl" for="fn">' + esc(W("wizFirst")) + '</label><input id="fn" autocomplete="given-name" value="' + esc(S.tech.first || "") + '"><div id="err"></div><div class="btns"><button class="btn sec" id="wizNext">Al gedaan, verder / Déjà fait, continuer</button></div>');
       $("fn").onkeydown = function (e) { if (e.key === "Enter") $("wizNext").click(); };
       OE.bind("wizNext", function () {
         var v = $("fn").value.replace(/\s+/g, " ").trim();
@@ -122,7 +138,8 @@
     }
     if (step === "share") {
       var ready = F.state === "granted", prompt = F.state === "prompt", other = F.line() === "ESA" ? "ESC" : "ESA";
-      var h = '<h2 class="q">' + esc(OE.fmt(x.wizShare, { s: F.shareName() })) + "</h2>";
+      var h = '<h2 class="q">' + esc(OE.fmt(x.wizShare, { s: F.shareName() })) + '</h2><p class="hint" id="shareHint">' + esc(OE.fmt(x.hintShare, { s: F.shareName() })) + "</p>";
+      if (F.issue && F.issue.code === "share") h += '<div class="err" id="pickWarn">' + esc(issueText(F.issue)) + "</div>";
       if (ready) h += '<p class="hint" id="shareOk">' + esc(OE.fmt(x.wizShareOk, { s: F.shareName(), p: F.paramDirName() })) + "</p>";
       if (prompt) h += '<p class="hint">' + esc(x.folderRenewP) + '</p><button class="btn pri big" id="renew">' + esc(x.folderRenew) + "</button>";
       h += '<button class="btn ' + (ready || prompt ? "sec" : "pri") + ' big" id="pick">' + esc(OE.fmt(ready || prompt ? x.folderChange : x.folderPick, { s: F.shareName() })) + "</button>";
@@ -132,7 +149,7 @@
       $("card").innerHTML = wizFrame(4, 4, h);
       function fail(e) { OE.pickerFail(e); }
       function afterShare() { if (F.line() === "ESA") finishWizard(); else goStep("docs"); }
-      OE.bind("pick", function () { F.pick().then(afterShare, fail); });
+      OE.bind("pick", function () { F.pick().then(function (r) { if (r && r.issue) { SC.setup(); return; } afterShare(); }, fail); });
       OE.bind("pickOther", function () { F.pick("ESA").then(function () { SC.setup(); }, fail); });
       OE.bind("renew", function () { F.renewAll().then(function () { if (F.state === "granted") afterShare(); else SC.setup(); }, fail); });
       OE.bind("wizNext", afterShare);
@@ -146,10 +163,11 @@
         return '<div class="wosel"><div><b>' + esc(label) + "</b>" + (hint ? "<small>" + esc(hint) + "</small>" : "") + '</div><button type="button" class="btn ' + (okb ? "ok" : "sec") + '" data-allow="' + esc(key) + '">' + esc(okb ? "✓ " + (s.handle.name || x.srcOk) : x.srcAllow) + "</button></div>";
       };
       var h = '<h2 class="q">' + esc(x.wizDocs) + '</h2><p class="hint">' + esc(x.wizDocsP) + "</p>" +
-        srcBtn("docs", "Public Documents", "C:\\Users\\Public\\Documents") +
-        '<p class="hint">' + esc(x.wizOpt || x.srcH) + "</p>" +
-        srcBtn("eeps", "EEPS", "C:\\EEPS Files") +
-        srcBtn("downloads", x.srcDown, x.srcDownHint) +
+        srcBtn("docs", "Public Documents", srcHint("docs")) +
+        '<p class="hint">' + esc(x.srcH) + "</p>" +
+        srcBtn("eeps", "EEPS", srcHint("eeps")) +
+        srcBtn("downloads", x.srcDown, srcHint("downloads")) +
+        (F.issue && F.issue.code !== "share" ? '<div class="err" id="pickWarn">' + esc(issueText(F.issue)) + "</div>" : "") +
         batLink() + '<div id="err"></div><div class="btns"><button class="btn sec" id="wizBack">‹ ' + esc(x.back) + '</button><button class="btn pri" id="wizDone">' + esc(x.wizDone) + "</button></div>";
       $("card").innerHTML = wizFrame(4, 4, h);
       [].forEach.call($("card").querySelectorAll("[data-allow]"), function (b) {
@@ -169,7 +187,8 @@
       $("card").innerHTML = h; return;
     }
     var other = F.line() === "ESA" ? "ESC" : "ESA", pName = F.paramDirName();
-    h = '<div class="narrow"><h2 class="q">' + x.folderH + '</h2><p class="hint" id="shareNow" style="margin-top:-8px">' + esc(OE.fmt(x.shareNow, { s: F.shareName(), p: pName })) + "</p><p class=\"hint\">" + esc(OE.fmt(x.folderP, { s: F.shareName(), p: pName })) + "</p>";
+    h = '<div class="narrow"><h2 class="q">' + x.folderH + '</h2><p class="hint" id="shareNow" style="margin-top:-8px">' + esc(OE.fmt(x.shareNow, { s: F.shareName(), p: pName })) + '</p><p class="hint" id="shareHint">' + esc(OE.fmt(x.hintShare, { s: F.shareName() })) + "</p><p class=\"hint\">" + esc(OE.fmt(x.folderP, { s: F.shareName(), p: pName })) + "</p>";
+    if (F.issue && F.issue.code === "share") h += '<div class="err" id="pickWarn">' + esc(issueText(F.issue)) + "</div>";
     if (F.picked) h += '<div class="wosel"><div><small>' + x.folderNow + '</small><b id="fname">📁 ' + esc(F.picked.name) + "</b>" +
       (st === "granted" ? "<small>→ " + esc(F.label()) + "</small>" : "") + "</div></div>";
     if (st === "prompt") h += '<p class="hint">' + x.folderRenewP + '</p><button class="btn pri big" id="renew">' + x.folderRenew + "</button>";
@@ -179,7 +198,7 @@
     h += '<div id="err"></div></div>';
     $("card").innerHTML = h;
     function fail(e) { OE.pickerFail(e); }
-    OE.bind("pick", function () { F.pick().then(function () { OE.go("form"); }, fail); });
+    OE.bind("pick", function () { F.pick().then(function (r) { if (r && r.issue) { SC.folder(); return; } OE.go("form"); }, fail); });
     OE.bind("pickOther", function () { F.pick(other).then(function () { SC.folder(); }, fail); });
     OE.bind("renew", function () { F.renewAll().then(function () { if (F.state === "granted") OE.go("form"); else SC.folder(); }, fail); });
     OE.bind("cont", function () { OE.go("form"); });
@@ -188,11 +207,11 @@
   /* ---------- settings ---------- */
   SC.settings = function () {
     var x = OE.t(), S = OE.S;
-    $("card").innerHTML = '<div class="narrow"><h2 class="q">' + x.setH + '</h2><ul class="list">' +
+    $("card").innerHTML = '<div class="narrow"><h2 class="q">' + x.setH + "</h2>" + setupBanner() + '<ul class="list">' +
       "<li><span><b>" + x.setName + "</b>" + esc(S.tech.first + " " + S.tech.last) + '</span><button class="edit" id="eName">' + x.edit + "</button></li>" +
       "<li><span><b>" + x.setFolder + "</b>" + esc(OE.fs.label() || x.none) + '</span><button class="edit" id="eDir">' + x.edit + "</button></li>" +
       "<li><span><b>" + x.setLang + "</b>" + (S.lang === "fr" ? "Français" : "Nederlands") + '</span><button class="edit" id="eLang">' + x.edit + "</button></li>" +
-      "<li><span><b>" + x.wizRedo + "</b><a class=\"linkb\" id=\"setupBat\" href=\"ESC_tool_setup.bat\" download>ESC_tool_setup.bat</a></span><button class=\"edit\" id=\"reSetup\">" + x.wizRedo + "</button></li></ul>" +
+      "<li><span><b>" + x.wizRedo + "</b></span><button class=\"edit\" id=\"reSetup\">" + x.wizRedo + "</button></li></ul>" +
       '<div class="btns"><button class="btn pri" id="bk">‹ ' + x.back + "</button></div></div>";
     OE.bind("eName", function () { OE.go("tech"); });
     OE.bind("eDir", function () { OE.go("folder"); });
@@ -448,7 +467,7 @@
     var box = $("srcBox"), F = OE.fs; if (!box) return;
     var rows = (F.sources || []).map(function (s) {
       var label = s.key === "downloads" ? x.srcDown : (s.label || s.key);
-      var hint = s.key === "downloads" ? x.srcDownHint : (s.hint || "");
+      var hint = srcHint(s.key) || s.hint || "";
       var btn = s.handle
         ? '<button type="button" class="srca ok" data-allow="' + esc(s.key) + '">✓ ' + esc(s.handle.name || x.srcOk) + "</button>"
         : '<button type="button" class="srca" data-allow="' + esc(s.key) + '">' + esc(x.srcAllow) + "</button>";
@@ -458,7 +477,8 @@
     var prog = (F.programs || []).map(function (p) {
       return "<li><span><b>" + esc(p.name) + "</b><small>" + esc(p.name + "\\" + p.folder) + "</small></span><span class=\"srca ok\">✓</span></li>";
     }).join("");
-    box.innerHTML = (F._pending ? '<button type="button" class="btn sec" id="renewAll">' + esc(x.folderRenew) + "</button>" : "") +
+    var warn = F.issue && F.issue.code !== "share" ? '<div class="err" id="pickWarn">' + esc(issueText(F.issue)) + "</div>" : "";
+    box.innerHTML = (F._pending ? '<button type="button" class="btn sec" id="renewAll">' + esc(x.folderRenew) + "</button>" : "") + warn +
       '<div class="lbl" style="margin-top:0">' + esc(x.srcH) + '</div><ul class="list" id="srcList">' + rows + "</ul>" +
       (prog ? '<div class="lbl">' + esc(x.srcFound) + '</div><ul class="list" id="progList">' + prog + "</ul>" : "") +
       '<button type="button" class="small" id="srcAdd">' + esc(x.srcAdd) + "</button>";
