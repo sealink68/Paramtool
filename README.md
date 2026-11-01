@@ -13,7 +13,7 @@ Live (GitHub Pages): https://sealink68.github.io/ESC_tool/
 
 ## Flow
 1. First start: language (NL/FR), then the technician's first and last name (localStorage; change via ⚙).
-2. Once: pick the folder `ESC_Share` (its `projecten` subfolder is used/created) or `projecten` directly.
+2. Once: pick the folder for the selected line — `ESC_Share` or `ESA_Share` (its `projecten` subfolder is used/created) or `projecten` directly. The header switch **ESA / ESC** is remembered; each line keeps its own folder.
    The handle is kept in IndexedDB. After a browser restart, click **Toegang tot map hernieuwen / Renouveler l'accès au dossier**.
 3. Form: device family + sub-model (with *Ander… / Autre…* free text), Dossiernummer (ServiceMax), Serienummer,
    Ordernummer, the parameter file (click or drag & drop). Date/time are automatic.
@@ -24,6 +24,10 @@ Live (GitHub Pages): https://sealink68.github.io/ESC_tool/
    - `<Family>_<Submodel>_<Dossier>_info.pdf` – A4, NL/FR labels, product image, all values as selectable text;
    - `_esc_info.json` – metadata, used to offer prefill when the same family + dossier is entered again.
 5. Result screen: folder, file names, deleted file; **Nieuw toestel / Nouvel appareil** and **Open PDF**.
+
+**ESA** lists only ES250 Proline Easy, ES250/130 Proline, ES250/180 Proline, ES250/FST Proline, ES400 Proline and ES500 Proline. **ESC** lists the existing security-entrance models.
+
+**Laatste parameterfile ophalen** scans the allowed source folders recursively (Pavis3, Pavis96NG, EEPS, Downloads, or an extra folder) for the newest `.xml` / `.prd` / `.dat` / `.kmc` / `.eep` / `.mot` (never `.mhx`), renames it `Familie_Submodel_Dossier_YYYY-MM-DD_HHMM.ext` and copies it into `projecten\ESC-param`. **Origineel verwijderen na opslaan** is off by default and deletes the source only after that copy is size-checked. On iPhone/iPad the same rename is offered via the share sheet or a download, because there is no folder access; the Chrome-only banner does not block iOS.
 
 Existing dossiers: the search is hidden by default; the 🔍 button **Bestaand dossier zoeken / Rechercher un dossier
 existant** next to the form title opens it (click again, ✕ or Esc closes it). Picking a dossier fills the form.

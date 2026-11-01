@@ -10,6 +10,11 @@
     document.title = OE.CFG.APP; document.documentElement.lang = L;
     [].forEach.call(document.querySelectorAll("#seg button"), function (b) { b.classList.toggle("on", b.dataset.l === S.lang); });
     OE.$("seg").style.visibility = S.lang ? "visible" : "hidden";
+    var ln = OE.$("line");
+    if (ln) {
+      ln.hidden = !S.lang;
+      [].forEach.call(ln.querySelectorAll("button"), function (b) { b.classList.toggle("on", b.dataset.line === (S.line === "ESA" ? "ESA" : "ESC")); b.setAttribute("aria-checked", b.classList.contains("on") ? "true" : "false"); });
+    }
     var st = OE.$("set"); st.hidden = !S.lang || !(S.tech.first && S.tech.last); st.title = st.ariaLabel = OE.t().settings.replace(/^\S+\s/, ""); if (OE.netUI) OE.netUI(); OE.fitBrand();
   };
   /* dormakaba logo (same behaviour as Onderhoud_Entretien): full word mark only when it fits next to the title, else just the red symbol. */
@@ -31,14 +36,22 @@
     var S = OE.S, fs = OE.fs.state;
     if (!S.lang) S.screen = "lang";
     else if (!(S.tech.first && S.tech.last) && S.screen !== "lang") S.screen = "tech";
-    else if ((S.screen === "form" || S.screen === "result") && fs !== "granted") S.screen = "folder";
+    else if (fs === "ios" && S.screen === "folder") S.screen = "form";
+    else if ((S.screen === "form" || S.screen === "result") && fs !== "granted" && fs !== "ios") S.screen = "folder";
     OE.brwUI(); OE.hdr(); if (OE.hideNumTip) OE.hideNumTip();
     (OE.screens[S.screen] || OE.screens.form)();
     OE.anim(dir || 1); window.scrollTo(0, 0);
   };
-  /* Browser check: "edge" (wipes site data on close on company laptops), "nofs" (no File System Access, e.g. Firefox),
-     "" = fine (Chrome, incl. installed app). */
+  /* iPhone/iPad (incl. iPadOS desktop UA): file-input fallback, Chrome banner must not block them. */
+  OE.ios = function () {
+    var ua = navigator.userAgent || "", p = navigator.platform || "";
+    if (/iPad|iPhone|iPod/.test(ua)) return true;
+    return p === "MacIntel" && navigator.maxTouchPoints > 1;
+  };
+  /* Browser check: "ios" (share/download, no banner), "edge" (wipes site data on close on company laptops),
+     "nofs" (no File System Access, e.g. Firefox), "" = fine (Chrome, incl. installed app). */
   OE.browser = function () {
+    if (OE.ios()) return "ios";
     if (typeof window.showDirectoryPicker !== "function") return "nofs";
     var d = navigator.userAgentData, edge = !!(d && d.brands && d.brands.some(function (b) { return /Microsoft Edge/i.test(b.brand); }));
     return edge || /\bEdg(e|A|iOS)?\//.test(navigator.userAgent) ? "edge" : "";
@@ -46,7 +59,7 @@
   OE.brwUI = function () {
     var el = OE.$("brw"), k = OE.browser(), S = OE.S, both = !S.lang;
     if (!el) return;
-    if (!k || (k === "edge" && sessionStorage.getItem("esc_brw_ok"))) { el.hidden = true; el.innerHTML = ""; return; }
+    if (!k || k === "ios" || (k === "edge" && sessionStorage.getItem("esc_brw_ok"))) { el.hidden = true; el.innerHTML = ""; return; }
     function part(L) {
       var x = OE.T[L];
       return "<h3>⚠️ " + x.brwH + "</h3><p>" + (k === "edge" ? x.brwEdge : x.brwNoFs) + '</p><ol class="brwSteps">' + x.brwSteps.split("\n").map(function (l) { return "<li>" + l.replace(/^\d+\.\s*/, "") + "</li>"; }).join("") + "</ol>";

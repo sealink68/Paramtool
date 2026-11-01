@@ -9,6 +9,8 @@ padding:calc(env(safe-area-inset-top) + 14px) calc(env(safe-area-inset-right) + 
 header{display:flex;align-items:center;justify-content:space-between;color:#fff;margin:4px 2px 14px}
 header h1{font-size:26px;margin:0;font-weight:800;letter-spacing:-.5px}
 .seg{display:flex;background:rgba(255,255,255,.2);border-radius:12px;padding:3px}
+.seg.line{margin-right:6px}
+.seg.line button{font-size:13px;padding:8px 10px;letter-spacing:.02em}
 .seg button{border:0;background:transparent;color:#fff;font-weight:700;font-size:15px;padding:8px 14px;border-radius:9px;min-height:38px;cursor:pointer}
 .seg button.on{background:#fff;color:var(--a)}
 .card{background:var(--card);border-radius:var(--r);box-shadow:0 20px 50px rgba(15,23,42,.25);padding:22px;overflow:hidden;position:relative}
@@ -237,4 +239,12 @@ h3.sub{font-size:15px;margin:16px 0 4px}
 .latestbox small{display:block;color:var(--mu);margin-top:8px}
 .latestbox .btns{margin-top:8px}
 .who{font-size:13px;color:var(--mu);margin:-6px 0 8px}.linkb{background:none;border:0;color:var(--a);font-weight:700;cursor:pointer;padding:4px;text-decoration:underline}
+.src{margin-top:12px;border:1px solid #e2e8f0;border-radius:14px;padding:10px 12px;background:#f8fafc}
+.src .list li{align-items:center}
+.src small{display:block;color:var(--mu);font-weight:500;word-break:break-all}
+.src .srca{flex:none;border:0;border-radius:10px;background:#e2e8f0;color:var(--tx);font-weight:800;font-size:13px;padding:8px 12px;min-height:40px;cursor:pointer}
+.src .srca.ok{background:#d1fae5;color:#065f46;box-shadow:none}
+.chk{display:flex;gap:8px;align-items:flex-start;margin-top:10px;font-size:14px;font-weight:650;line-height:1.35}
+.chk input{width:auto;margin-top:2px;accent-color:var(--a)}
+.ioshint{background:#eff6ff;border:1px solid #bfdbfe;color:#1e3a8a;border-radius:12px;padding:12px;margin-top:8px;font-size:13px;font-weight:600;line-height:1.4}
 .brw{background:#fff7ed;border:2px solid #fb923c;border-radius:16px;padding:14px 18px;margin:0 auto 14px;max-width:900px;color:#7c2d12;font-size:14px}.brw h3{margin:0 0 6px;font-size:17px}.brw ol{margin:6px 0 6px 20px;padding:0}.brw code{user-select:all;background:#fff;padding:2px 6px;border-radius:6px}.brwB{display:flex;gap:10px;flex-wrap:wrap}

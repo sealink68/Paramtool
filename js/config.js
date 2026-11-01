@@ -4,15 +4,32 @@
 var OE = window.OE = window.OE || {};
 OE.CFG = {
   APP: "ESC_tool",
-  SUBDIR: "projecten",          // working folder inside ESC_Share
-  SHARE: "ESC-Share",
+  SUBDIR: "projecten",          // working folder inside the chosen share
+  SHARES: { ESC: "ESC_Share", ESA: "ESA_Share" },
   URL: "https://sealink68.github.io/ESC_tool/",
   KEEP: 3,                      // parameter files kept per extension (case-insensitive) per dossier folder
   META: "_esc_info.json",
-  PARAM_DIR: "ESC-param",       // inside projecten: where the configuration software drops new parameter files
-  PARAM_EXT: [".xml", ".dat", ".prd"], // case-insensitive
-  PARAM_MIN: 5,                 // "Laatste parameterfile ophalen": only files changed within the last N minutes
-  OTHER: "__other__"
+  PARAM_DIR: "ESC-param",       // inside projecten: renamed parameter files are copied here
+  PARAM_EXT: [".xml", ".prd", ".dat", ".kmc", ".eep", ".mot"], // case-insensitive; .mhx is never a parameter file
+  PARAM_DENY: [".mhx"],
+  OTHER: "__other__",
+  /* ESA shows only these systems (no ESC sub-models). ESC keeps OE.MODELS. */
+  ESA: ["ES250 Proline Easy", "ES250/130 Proline", "ES250/180 Proline", "ES250/FST Proline", "ES400 Proline", "ES500 Proline"],
+  /* Suggested source folders. The browser cannot open a path; 'Toestaan' calls showDirectoryPicker once (id remembers it). */
+  SOURCES: [
+    { key: "pavis3", label: "Pavis3", hint: "C:\\Users\\Public\\Documents\\Pavis3\\projects", startIn: "documents" },
+    { key: "pavis96", label: "Pavis96NG", hint: "C:\\Users\\Public\\Documents\\Pavis96NG\\Projects", startIn: "documents" },
+    { key: "eeps", label: "EEPS", hint: "C:\\EEPS Files", startIn: "documents" },
+    { key: "downloads", label: "", hint: "", startIn: "downloads" }
+  ]
+};
+OE.catalog = function () {
+  if (OE.S && OE.S.line === "ESA") {
+    var o = {};
+    OE.CFG.ESA.forEach(function (n) { o[n] = [{ id: n }]; });
+    return o;
+  }
+  return OE.MODELS || {};
 };
 
 OE.T = {
@@ -22,7 +39,9 @@ OE.T = {
     techH: "Wie ben je?", techP: "Je naam komt in de PDF als technieker. Wordt enkel op deze laptop bewaard.",
     first: "Voornaam", last: "Achternaam", firstPh: "bv. Jan", lastPh: "bv. Peeters", needName: "Vul voor- en achternaam in.",
     techStart: "Verder", techSave: "Opslaan", back: "Terug",
-    folderH: "Map kiezen", folderP: "Kies één keer de door OneDrive gesynchroniseerde map ‘ESC_Share’ (of rechtstreeks de submap ‘projecten’).",
+    lineLabel: "Reeks", lineEsc: "ESC", lineEsa: "ESA",
+    folderH: "Map kiezen", folderP: "Kies één keer de door OneDrive gesynchroniseerde map ‘{s}’ (of rechtstreeks de submap ‘projecten’). ESC gebruikt ESC_Share, ESA gebruikt ESA_Share.",
+    shareNow: "Doelmap: {s}\\projecten",
     folderPick: "📁 Map kiezen", folderChange: "📁 Map wijzigen", folderRenew: "🔓 Toegang toestaan",
     folderRenewP: "De browser vraagt na een herstart opnieuw toestemming om in de map te schrijven.",
     folderNow: "Gekozen map", folderUse: "projecten-map", folderOk: "Verder naar formulier",
@@ -35,17 +54,27 @@ OE.T = {
     brwNoFs: "Deze browser (bv. Firefox) kan geen bestanden in een map op je laptop opslaan. Opslaan is hier niet mogelijk; gebruik Google Chrome.",
     brwSteps: "1. Klik op ‘Link kopiëren’.\n2. Open Google Chrome en plak de link in de adresbalk (Ctrl+V, Enter).\n3. Klik in de adresbalk op het installatie-icoon om ESC_tool als app te installeren en gebruik daarna het icoon op het bureaublad of in het startmenu.",
     brwCopy: "📋 Link kopiëren", brwCopied: "✓ Link gekopieerd", brwCopyFail: "Kopiëren lukte niet – selecteer de link en kopieer manueel.", brwGo: "Toch doorgaan",
-    formH: "Toestelgegevens", whoTech: "Technieker", whoChange: "Wijzigen", family: "Toestelfamilie", sub: "Submodel", choose: "— kies —",
+    formH: "Toestelgegevens", whoTech: "Technieker", whoChange: "Wijzigen", family: "Toestelfamilie", sub: "Submodel", system: "Systeem", choose: "— kies —",
     dossier: "Dossiernummer (ServiceMax)", dossierPh: "bv. 00123456", serial: "Serienummer", order: "Ordernummer",
     dossierFolder: "Mapnaam", file: "Parameterbestand", fileDrop: "Sleep het bestand hierheen of klik om te kiezen",
     fileNone: "Geen bestand gekozen", dateNow: "Datum en tijd (automatisch)",
     exampleImg: "Voorbeeldafbeelding familie", noImg: "Geen afbeelding beschikbaar",
     save: "💾 Opslaan", saving: "Bezig met opslaan…",
-    latest: "⬇ Laatste parameterfile ophalen", latestBusy: "Zoeken in projecten\\ESC-param…",
-    latestNone: "Geen parameterbestand (.xml, .dat, .prd) van de laatste {m} minuten gevonden in projecten\\ESC-param. Kies het bestand manueel.",
-    latestOne: "Nieuwste bestand in ESC-param:", latestMany: "Meerdere recente bestanden gevonden – kies er één:",
-    latestUse: "Dit bestand gebruiken", latestOther: "Ander bestand kiezen…", latestErr: "ESC-param kon niet gelezen worden: {e}",
-    latestNoDir: "Kies eerst de map ESC_Share.",
+    latest: "⬇ Laatste parameterfile ophalen", latestBusy: "Zoeken in de bronmappen…",
+    latestNone: "Geen parameterbestand (.xml, .prd, .dat, .kmc, .eep, .mot) gevonden in de toegestane bronmappen. .mhx wordt overgeslagen. Kies het bestand manueel of sta een bronmap toe.",
+    latestNoSrc: "Sta minstens één bronmap toe (één keer ‘Toestaan’), of kies het bestand manueel.",
+    latestOne: "Nieuwste parameterbestand:", latestMany: "Meerdere bestanden gevonden – kies er één:",
+    latestUse: "Dit bestand gebruiken", latestOther: "Ander bestand kiezen…", latestErr: "De bronmap kon niet gelezen worden: {e}",
+    latestNoDir: "Kies eerst de map {s}.",
+    srcH: "Bronmappen", srcAllow: "Toestaan", srcOk: "toegestaan", srcAdd: "+ Map toevoegen", srcRemove: "Verwijderen",
+    srcDown: "Downloads", srcDownHint: "Downloads van deze gebruiker (Firefox bewaart bestanden van de adapterpagina http://192.168.10.4 hier)",
+    srcAddPh: "bv. Flap Control Center",
+    delOrig: "Origineel verwijderen na opslaan",
+    delOrigH: "Het bronbestand wordt pas verwijderd nadat de kopie in projecten\\ESC-param gecontroleerd is. Standaard uit.",
+    iosPick: "Bestand kiezen",
+    iosHint: "Kies het bestand in Bestanden → Downloads. Ruim Downloads daarna zelf op. Zet het daarna in OneDrive ‘{s}’ (map projecten). De adapter-wifi (http://192.168.10.4) heeft geen internet: het uploadt pas als je weer online bent.",
+    iosShare: "Delen…", iosDown: "Download parameterbestand", iosPdf: "Download PDF",
+    resParam: "Kopie in projecten\\ESC-param", resSrcDel: "Bronbestand verwijderd",
     need: "Vul alle verplichte velden in: {f}.", needFile: "parameterbestand",
     existH: "Bestaand dossier gevonden", existP: "Voor {f} / {d} bestaan al gegevens (laatst bijgewerkt {t}).",
     existLoad: "Gegevens laden", loaded: "Gegevens geladen.",
@@ -74,7 +103,9 @@ OE.T = {
     techH: "Qui êtes-vous ?", techP: "Votre nom figure dans le PDF comme technicien. Il est conservé uniquement sur cet ordinateur.",
     first: "Prénom", last: "Nom", firstPh: "p. ex. Jean", lastPh: "p. ex. Dupont", needName: "Indiquez le prénom et le nom.",
     techStart: "Continuer", techSave: "Enregistrer", back: "Retour",
-    folderH: "Choisir le dossier", folderP: "Choisissez une seule fois le dossier synchronisé par OneDrive « ESC_Share » (ou directement son sous-dossier « projecten »).",
+    lineLabel: "Gamme", lineEsc: "ESC", lineEsa: "ESA",
+    folderH: "Choisir le dossier", folderP: "Choisissez une seule fois le dossier synchronisé par OneDrive « {s} » (ou directement son sous-dossier « projecten »). ESC utilise ESC_Share, ESA utilise ESA_Share.",
+    shareNow: "Dossier cible : {s}\\projecten",
     folderPick: "📁 Choisir le dossier", folderChange: "📁 Changer de dossier", folderRenew: "🔓 Autoriser l'accès",
     folderRenewP: "Après un redémarrage, le navigateur redemande l'autorisation d'écrire dans le dossier.",
     folderNow: "Dossier choisi", folderUse: "dossier projecten", folderOk: "Continuer vers le formulaire",
@@ -87,17 +118,27 @@ OE.T = {
     brwNoFs: "Ce navigateur (p. ex. Firefox) ne peut pas enregistrer de fichiers dans un dossier de votre ordinateur. L'enregistrement est impossible ici ; utilisez Google Chrome.",
     brwSteps: "1. Cliquez sur « Copier le lien ».\n2. Ouvrez Google Chrome et collez le lien dans la barre d'adresse (Ctrl+V, Entrée).\n3. Cliquez sur l'icône d'installation dans la barre d'adresse pour installer ESC_tool comme app, puis utilisez l'icône sur le bureau ou dans le menu Démarrer.",
     brwCopy: "📋 Copier le lien", brwCopied: "✓ Lien copié", brwCopyFail: "La copie a échoué – sélectionnez le lien et copiez-le manuellement.", brwGo: "Continuer quand même",
-    formH: "Données de l'appareil", whoTech: "Technicien", whoChange: "Modifier", family: "Famille d'appareil", sub: "Sous-modèle", choose: "— choisir —",
+    formH: "Données de l'appareil", whoTech: "Technicien", whoChange: "Modifier", family: "Famille d'appareil", sub: "Sous-modèle", system: "Système", choose: "— choisir —",
     dossier: "Numéro de dossier (ServiceMax)", dossierPh: "p. ex. 00123456", serial: "Numéro de série", order: "Numéro de commande",
     dossierFolder: "Nom du dossier", file: "Fichier de paramètres", fileDrop: "Glissez le fichier ici ou cliquez pour choisir",
     fileNone: "Aucun fichier choisi", dateNow: "Date et heure (automatique)",
     exampleImg: "Image d'exemple de la famille", noImg: "Pas d'image disponible",
     save: "💾 Enregistrer", saving: "Enregistrement…",
-    latest: "⬇ Récupérer le dernier fichier de paramètres", latestBusy: "Recherche dans projecten\\ESC-param…",
-    latestNone: "Aucun fichier de paramètres (.xml, .dat, .prd) des {m} dernières minutes trouvé dans projecten\\ESC-param. Choisissez le fichier manuellement.",
-    latestOne: "Fichier le plus récent dans ESC-param :", latestMany: "Plusieurs fichiers récents trouvés – choisissez-en un :",
-    latestUse: "Utiliser ce fichier", latestOther: "Choisir un autre fichier…", latestErr: "Impossible de lire ESC-param : {e}",
-    latestNoDir: "Choisissez d'abord le dossier ESC_Share.",
+    latest: "⬇ Récupérer le dernier fichier de paramètres", latestBusy: "Recherche dans les dossiers source…",
+    latestNone: "Aucun fichier de paramètres (.xml, .prd, .dat, .kmc, .eep, .mot) trouvé dans les dossiers source autorisés. .mhx est ignoré. Choisissez le fichier manuellement ou autorisez un dossier source.",
+    latestNoSrc: "Autorisez au moins un dossier source (une fois « Autoriser »), ou choisissez le fichier manuellement.",
+    latestOne: "Fichier de paramètres le plus récent :", latestMany: "Plusieurs fichiers trouvés – choisissez-en un :",
+    latestUse: "Utiliser ce fichier", latestOther: "Choisir un autre fichier…", latestErr: "Impossible de lire le dossier source : {e}",
+    latestNoDir: "Choisissez d'abord le dossier {s}.",
+    srcH: "Dossiers source", srcAllow: "Autoriser", srcOk: "autorisé", srcAdd: "+ Ajouter un dossier", srcRemove: "Retirer",
+    srcDown: "Téléchargements", srcDownHint: "Téléchargements de cet utilisateur (Firefox y enregistre les fichiers de la page adaptateur http://192.168.10.4)",
+    srcAddPh: "p. ex. Flap Control Center",
+    delOrig: "Supprimer l'original après l'enregistrement",
+    delOrigH: "Le fichier source n'est supprimé qu'après vérification de la copie dans projecten\\ESC-param. Désactivé par défaut.",
+    iosPick: "Choisir un fichier",
+    iosHint: "Choisissez le fichier dans Fichiers → Téléchargements. Videz ensuite Téléchargements vous-même. Placez-le dans OneDrive « {s} » (dossier projecten). Le Wi-Fi de l'adaptateur (http://192.168.10.4) n'a pas Internet : l'envoi se fait quand vous êtes de nouveau en ligne.",
+    iosShare: "Partager…", iosDown: "Télécharger le fichier de paramètres", iosPdf: "Télécharger le PDF",
+    resParam: "Copie dans projecten\\ESC-param", resSrcDel: "Fichier source supprimé",
     need: "Complétez tous les champs obligatoires : {f}.", needFile: "fichier de paramètres",
     existH: "Dossier existant trouvé", existP: "Des données existent déjà pour {f} / {d} (dernière mise à jour {t}).",
     existLoad: "Charger les données", loaded: "Données chargées.",
@@ -147,8 +188,9 @@ OE.HELP = {
     title: "Help", close: "Sluiten",
     lang: ["Kies de taal van de app. Je kan later altijd wisselen met NL / FR bovenaan."],
     tech: ["Vul je voor- en achternaam in.", "• Je naam verschijnt als technieker in de PDF.", "• Wordt enkel in deze browser bewaard; wijzigen kan via ⚙ Instellingen."],
-    folder: ["De app schrijft rechtstreeks in de OneDrive-map ‘ESC_Share’ op je laptop.",
-      "• Kies ‘ESC_Share’ of meteen de submap ‘projecten’. Bij ‘ESC_Share’ wordt ‘projecten’ gebruikt (en aangemaakt indien nodig).",
+    folder: ["De app schrijft rechtstreeks in de OneDrive-map op je laptop. ESC gebruikt ‘ESC_Share’, ESA gebruikt ‘ESA_Share’ (underscore).",
+      "• Schakel bovenaan tussen ESA en ESC. Elke reeks onthoudt zijn eigen map.",
+      "• Kies de share-map of meteen de submap ‘projecten’. Bij de share wordt ‘projecten’ gebruikt (en aangemaakt indien nodig).",
       "• Na een herstart van de browser vraagt die opnieuw toestemming: klik dan één keer op ‘Toegang toestaan’.",
       "• De gekozen map wordt onthouden in deze browser. Andere map nodig? Klik op ‘Map wijzigen’ (ook via ⚙ Instellingen).",
       "• De submappen ‘projecten’ en ‘projecten\\ESC-param’ worden automatisch aangemaakt als ze nog niet bestaan.",
@@ -163,7 +205,11 @@ OE.HELP = {
       "• Serienummer en ordernummer: op het typeplaatje van het toestel staat het serienummer na ‘S/N:’ en het ordernummer naast de datum. Op een ouder groen Kaba-protocol (Werkstattabnahmeprotokoll) is het serienummer de ‘Fabrik-Nr.’ en het ordernummer de ‘Auftrags-Nr.’. Zie het ⓘ-icoon naast de velden.",
       "• Bestaat het dossier al, dan kan je de gegevens laden.",
       "• Per dossier worden max. 3 parameterbestanden per bestandstype bewaard (bv. 3 × .xml en 3 × .cfg; .xml en .XML zijn hetzelfde type, bestanden zonder extensie vormen een eigen groep). Bij een 4e bestand van hetzelfde type wordt het oudste van dat type verwijderd (je krijgt eerst een melding). Het nieuwste van elk type is ‘actief bij laatste bezoek’.",
-      "• ‘⬇ Laatste parameterfile ophalen’: zoekt in projecten\\ESC-param (niet in submappen) naar .xml-, .dat- of .prd-bestanden (hoofdletters maken niet uit) die de laatste 5 minuten gewijzigd zijn. Het nieuwste wordt voorgesteld met naam, tijd en grootte; bij meerdere kies je uit een lijstje. Niets gevonden? Dan opent het gewone bestandsvenster. Het bestand wordt opgeslagen zoals bij manueel kiezen.",
+      "• Bovenaan: ESA of ESC. ESA toont enkel ES250 Proline Easy, ES250/130 Proline, ES250/180 Proline, ES250/FST Proline, ES400 Proline en ES500 Proline (geen ESC-submodellen). ESC toont de bestaande toestellen. De keuze wordt onthouden.",
+      "• ‘⬇ Laatste parameterfile ophalen’ zoekt recursief in de bronmappen die je met ‘Toestaan’ hebt gekozen (de browser kan een pad niet zelf openen; één keer klikken volstaat). Voorgesteld: C:\\Users\\Public\\Documents\\Pavis3\\projects, C:\\Users\\Public\\Documents\\Pavis96NG\\Projects, C:\\EEPS Files en Downloads (Firefox zet bestanden van http://192.168.10.4 daar). ‘+ Map toevoegen’ voor een andere map, bv. Flap Control Center.",
+      "• Enkel .xml, .prd, .dat, .kmc, .eep en .mot (hoofdletters maken niet uit). .mhx wordt nooit genomen. Het nieuwste bestand wordt voorgesteld. Bij Opslaan krijgt het de naam Familie_Submodel_Dossier_datum en een kopie komt in projecten\\ESC-param (map wordt aangemaakt).",
+      "• ‘Origineel verwijderen na opslaan’ staat standaard uit en wordt onthouden. Het bronbestand verdwijnt pas nadat de kopie in ESC-param gecontroleerd is.",
+      "• iPhone/iPad: ‘Bestand kiezen’ uit Bestanden → Downloads. Deel of download daarna naar OneDrive ESC_Share of ESA_Share. Ruim Downloads zelf op. De adapter-wifi heeft geen internet; OneDrive uploadt pas als je weer online bent. De melding ‘open in Chrome’ blokkeert de iPhone niet.",
       "• Datum en tijd worden automatisch ingevuld.",
       "• Je naam en taal worden in deze browser onthouden. Bovenaan het formulier staat je naam met ‘Wijzigen’; de taal wissel je met NL / FR bovenaan (of via ⚙ Instellingen)."],
     result: ["Overzicht van wat er in de map werd opgeslagen.",
@@ -175,8 +221,9 @@ OE.HELP = {
     title: "Aide", close: "Fermer",
     lang: ["Choisissez la langue de l'application. Vous pouvez toujours changer avec NL / FR en haut."],
     tech: ["Indiquez votre prénom et votre nom.", "• Votre nom figure comme technicien dans le PDF.", "• Conservé uniquement dans ce navigateur ; modifiable via ⚙ Paramètres."],
-    folder: ["L'application écrit directement dans le dossier OneDrive « ESC_Share » de votre ordinateur.",
-      "• Choisissez « ESC_Share » ou directement le sous-dossier « projecten ». Avec « ESC_Share », « projecten » est utilisé (et créé si nécessaire).",
+    folder: ["L'application écrit directement dans le dossier OneDrive de votre ordinateur. ESC utilise « ESC_Share », ESA utilise « ESA_Share » (tiret bas).",
+      "• Basculez en haut entre ESA et ESC. Chaque gamme mémorise son propre dossier.",
+      "• Choisissez le dossier de partage ou directement le sous-dossier « projecten ». Avec le partage, « projecten » est utilisé (et créé si nécessaire).",
       "• Après un redémarrage, le navigateur redemande l'autorisation : cliquez une fois sur « Autoriser l'accès ».",
       "• Le dossier choisi est mémorisé dans ce navigateur. Autre dossier ? Cliquez sur « Changer de dossier » (aussi via ⚙ Paramètres).",
       "• Les sous-dossiers « projecten » et « projecten\\ESC-param » sont créés automatiquement s'ils n'existent pas.",
@@ -191,7 +238,11 @@ OE.HELP = {
       "• Numéro de série et numéro de commande : sur la plaque signalétique de l'appareil, le numéro de série suit « S/N: » et le numéro de commande se trouve à côté de la date. Sur un ancien protocole Kaba vert (Werkstattabnahmeprotokoll), le numéro de série est le « Fabrik-Nr. » et le numéro de commande l'« Auftrags-Nr. ». Voir l'icône ⓘ à côté des champs.",
       "• Si le dossier existe déjà, vous pouvez charger ses données.",
       "• Au maximum 3 fichiers de paramètres sont conservés par dossier et par type de fichier (p. ex. 3 × .xml et 3 × .cfg ; .xml et .XML sont le même type, les fichiers sans extension forment un groupe à part). Au 4e fichier d'un même type, le plus ancien de ce type est supprimé (avec avertissement préalable). Le plus récent de chaque type est « actif lors de la dernière visite ».",
-      "• « ⬇ Récupérer le dernier fichier de paramètres » : cherche dans projecten\\ESC-param (pas dans les sous-dossiers) les fichiers .xml, .dat ou .prd (majuscules ou minuscules) modifiés au cours des 5 dernières minutes. Le plus récent est proposé avec nom, heure et taille ; s'il y en a plusieurs, choisissez dans une petite liste. Rien trouvé ? La fenêtre de fichiers habituelle s'ouvre. Le fichier est enregistré comme s'il avait été choisi manuellement.",
+      "• En haut : ESA ou ESC. ESA n'affiche que ES250 Proline Easy, ES250/130 Proline, ES250/180 Proline, ES250/FST Proline, ES400 Proline et ES500 Proline (pas de sous-modèles ESC). ESC affiche les appareils existants. Le choix est mémorisé.",
+      "• « ⬇ Récupérer le dernier fichier de paramètres » cherche récursivement dans les dossiers source autorisés avec « Autoriser » (le navigateur ne peut pas ouvrir un chemin tout seul ; un clic suffit). Proposés : C:\\Users\\Public\\Documents\\Pavis3\\projects, C:\\Users\\Public\\Documents\\Pavis96NG\\Projects, C:\\EEPS Files et Téléchargements (Firefox y place les fichiers de http://192.168.10.4). « + Ajouter un dossier » pour un autre, p. ex. Flap Control Center.",
+      "• Uniquement .xml, .prd, .dat, .kmc, .eep et .mot (majuscules ou minuscules). .mhx n'est jamais pris. Le fichier le plus récent est proposé. À l'enregistrement il est renommé Famille_Sous-modèle_Dossier_date et une copie va dans projecten\\ESC-param (dossier créé automatiquement).",
+      "• « Supprimer l'original après l'enregistrement » est désactivé par défaut et mémorisé. Le fichier source n'est supprimé qu'après vérification de la copie dans ESC-param.",
+      "• iPhone/iPad : « Choisir un fichier » depuis Fichiers → Téléchargements. Partagez ou téléchargez ensuite vers OneDrive ESC_Share ou ESA_Share. Videz Téléchargements vous-même. Le Wi-Fi de l'adaptateur n'a pas Internet ; OneDrive envoie les fichiers quand vous êtes de nouveau en ligne. L'avertissement « ouvrir dans Chrome » ne bloque pas l'iPhone.",
       "• La date et l'heure sont remplies automatiquement.",
       "• Votre nom et la langue sont mémorisés dans ce navigateur. En haut du formulaire figure votre nom avec « Modifier » ; changez la langue avec NL / FR en haut (ou via ⚙ Paramètres)."],
     result: ["Aperçu de ce qui a été enregistré dans le dossier.",
@@ -206,7 +257,7 @@ OE.HELP_EXTRA = {
   nl: [
     "## Map controleren",
     "1. Open Verkenner en klik links op ‘OneDrive – dormakaba’.",
-    "2. Staat de map ‘ESC_Share’ er? Zo niet: open ESC_Share op het web (SharePoint/OneDrive) en klik op ‘Snelkoppeling toevoegen aan Mijn bestanden’ of ‘Synchroniseren’.",
+    "2. Staat de map ‘ESC_Share’ (of ‘ESA_Share’ bij ESA) er? Zo niet: open ze op het web (SharePoint/OneDrive) en klik op ‘Snelkoppeling toevoegen aan Mijn bestanden’ of ‘Synchroniseren’.",
     "3. Kijk naar het icoon naast ESC_Share: groen bolletje met wit vinkje = staat op deze laptop (goed). Blauw wolkje = enkel online.",
     "4. Blauw wolkje? Klik rechts op ESC_Share en kies ‘Altijd op dit apparaat behouden’.",
     "5. Het OneDrive-wolkje in de taakbalk (rechtsonder) moet ‘Up-to-date’ tonen: geen rood kruisje, niet gepauzeerd.",
@@ -226,7 +277,7 @@ OE.HELP_EXTRA = {
   fr: [
     "## Vérifier le dossier",
     "1. Ouvrez l'Explorateur de fichiers et cliquez à gauche sur « OneDrive – dormakaba ».",
-    "2. Le dossier « ESC_Share » est-il là ? Sinon : ouvrez ESC_Share sur le web (SharePoint/OneDrive) et cliquez sur « Ajouter un raccourci à Mes fichiers » ou « Synchroniser ».",
+    "2. Le dossier « ESC_Share » (ou « ESA_Share » pour ESA) est-il là ? Sinon : ouvrez-le sur le web (SharePoint/OneDrive) et cliquez sur « Ajouter un raccourci à Mes fichiers » ou « Synchroniser ».",
     "3. Regardez l'icône à côté d'ESC_Share : rond vert avec coche blanche = présent sur cet ordinateur (bon). Nuage bleu = en ligne uniquement.",
     "4. Nuage bleu ? Clic droit sur ESC_Share, puis « Toujours conserver sur cet appareil ».",
     "5. Le nuage OneDrive dans la barre des tâches (en bas à droite) doit indiquer « À jour » (Up-to-date) : pas de croix rouge, pas en pause.",
