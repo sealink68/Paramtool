@@ -320,9 +320,7 @@
       return "<li><span><b>" + esc(label) + "</b>" + (hint ? "<small>" + esc(hint) + "</small>" : "") + rm + "</span>" + btn + "</li>";
     }).join("");
     box.innerHTML = '<div class="lbl" style="margin-top:0">' + esc(x.srcH) + '</div><ul class="list" id="srcList">' + rows + "</ul>" +
-      '<button type="button" class="small" id="srcAdd">' + esc(x.srcAdd) + "</button>" +
-      '<label class="chk"><input type="checkbox" id="delSrc"' + (OE.S.delSrc ? " checked" : "") + "> " + esc(x.delOrig) + "</label>" +
-      '<p class="hint">' + esc(x.delOrigH) + "</p>";
+      '<button type="button" class="small" id="srcAdd">' + esc(x.srcAdd) + "</button>";
     [].forEach.call(box.querySelectorAll("[data-allow]"), function (b) {
       b.onclick = function () { F.allowSource(b.getAttribute("data-allow")).then(function () { drawSources(OE.t()); }, function (e) { if (e && e.name === "AbortError") return; OE.err(e && e.message === "denied" ? x.folderDenied : OE.fmt(x.latestErr, { e: (e && e.message) || e })); }); };
     });
@@ -330,7 +328,6 @@
       b.onclick = function () { F.dropSource(b.getAttribute("data-rm")).then(function () { drawSources(OE.t()); }); };
     });
     OE.bind("srcAdd", function () { F.addSource().then(function () { drawSources(OE.t()); }, function (e) { if (e && e.name === "AbortError") return; }); });
-    var cb = $("delSrc"); if (cb) cb.onchange = function () { OE.S.delSrc = cb.checked; OE.save(); };
   }
   function latestParam(x, use) {
     var F = OE.fs, box = $("latestBox");
@@ -343,7 +340,7 @@
     ready.then(function () { return F.newestSource(); }).then(function (l) {
       if (!l.length) { box.innerHTML = '<p class="hint" id="latestNone">' + esc(x.latestNone) + "</p>"; try { $("file").click(); } catch (e) {} return; }
       function row(p, i) { return '<button type="button" data-li="' + i + '"><span><b>' + esc(p.name) + "</b></span><small>" + esc(p.srcLabel || "") + " · " + hm(p.time) + " · " + kb(p.size) + "</small></button>"; }
-      function done(p) { try { p.file._srcDir = p.dir; p.file._srcName = p.name; } catch (e) {} box.innerHTML = ""; use(p.file); }
+      function done(p) { box.innerHTML = ""; use(p.file); }
       if (l.length === 1) {
         box.innerHTML = '<div class="latestone"><small>' + esc(x.latestOne) + '</small><div class="wolist" id="latestList">' + row(l[0], 0) + "</div>" +
           '<div class="btns"><button type="button" class="small" id="latestOther">' + esc(x.latestOther) + '</button><button type="button" class="btn ok" id="latestUse">' + esc(x.latestUse) + "</button></div></div>";
@@ -401,11 +398,7 @@
         });
       })
       .then(function () { return F.storeParam(pname, f.file); })
-      .then(function () {
-        r.paramCopy = pname;
-        if (!(OE.S.delSrc && f.file && f.file._srcDir && f.file._srcName)) return;
-        return f.file._srcDir.removeEntry(f.file._srcName).then(function () { r.srcDeleted = f.file._srcName; });
-      })
+      .then(function () { r.paramCopy = pname; })
       .then(function () { OE.busy = false; r.folder = F.label() + "\\" + OE.safeName(fn, true) + "\\" + OE.safeName(f.dossier); mem.result = r; mem.sel = null; mem.dq = ""; OE.rescan(); OE.go("result"); })
       .catch(function (e) { OE.busy = false; b.disabled = false; b.textContent = x.save; OE.err(OE.fmt(x.saveErr, { e: e.message || e })); });
   }
@@ -435,7 +428,6 @@
       "<li><span><b>" + x.resPdf + '</b><span id="rPdf">' + esc(r.pdfName) + "</span></span></li>" +
       "<li><span><b>" + x.resMeta + "</b>" + esc(C.META) + "</span></li>" +
       (r.paramCopy ? "<li><span><b>" + x.resParam + "</b><span id=\"rParam\">" + esc(r.paramCopy) + "</span></span></li>" : "") +
-      (r.srcDeleted ? "<li><span><b>" + x.resSrcDel + "</b><span id=\"rSrcDel\">" + esc(r.srcDeleted) + "</span></span></li>" : "") +
       (r.ios ? '<li><span><p class="ioshint" id="iosHint">' + esc(OE.fmt(x.iosHint, { s: OE.fs.shareName() })) + "</p></span></li>" : "") +
       (r.deleted.length ? '<li class="del"><span><b>' + x.resDel + '</b><span id="rDel">🗑 ' + r.deleted.map(esc).join("<br>🗑 ") + "</span></span></li>" : "") +
       "</ul><h3 class=\"sub\">" + x.resList + '</h3><div id="rList">' + groupedHtml(x, r.files, true) + "</div>" +

@@ -4,10 +4,10 @@
   var KEY = "esc_state";
   OE.loadState = function () {
     var s = {}; try { s = JSON.parse(localStorage.getItem(KEY) || "{}") || {}; } catch (e) {}
-    return { lang: s.lang || "", tech: s.tech || { first: "", last: "" }, screen: s.screen || "form", line: s.line === "ESA" ? "ESA" : "ESC", delSrc: !!s.delSrc };
+    return { lang: s.lang || "", tech: s.tech || { first: "", last: "" }, screen: s.screen || "form", line: s.line === "ESA" ? "ESA" : "ESC" };
   };
   OE.save = function () {
-    var S = OE.S; try { localStorage.setItem(KEY, JSON.stringify({ lang: S.lang, tech: S.tech, screen: S.screen === "result" ? "form" : S.screen, line: S.line === "ESA" ? "ESA" : "ESC", delSrc: !!S.delSrc })); } catch (e) {}
+    var S = OE.S; try { localStorage.setItem(KEY, JSON.stringify({ lang: S.lang, tech: S.tech, screen: S.screen === "result" ? "form" : S.screen, line: S.line === "ESA" ? "ESA" : "ESC" })); } catch (e) {}
   };
   function db() {
     return new Promise(function (ok, ko) {

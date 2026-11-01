@@ -64,7 +64,7 @@ with sync_playwright() as p:
     fn=pg.inner_text("#rFile"); ok("save with fetched file: name %s"%fn, fn.endswith(".xml") and "D1" in fn)
     copied=pg.evaluate("Object.keys(__root.c.projecten.c['ESC-param'].c)")
     ok("renamed copy in projecten/ESC-param", any(k.endswith(".xml") and "D1" in k for k in copied))
-    ok("original kept when delete-checkbox is off", "z.xml" in pg.evaluate("Object.keys(__sources.pavis3.c)"))
+    ok("original is never deleted", "z.xml" in pg.evaluate("Object.keys(__sources.pavis3.c)") and pg.query_selector("#delSrc") is None and "delSrc" not in (pg.evaluate("localStorage.getItem('esc_state')") or ""))
     # lang + name remembered across reload, change via form link
     pg.reload(); pg.wait_for_selector("#whoName")
     ok("reload keeps name", pg.inner_text("#whoName")=="Jan P")
@@ -131,15 +131,6 @@ with sync_playwright() as p:
     ok("source shows as allowed", "✓" in pg.inner_text("[data-allow=pavis3]"))
     pg.click("#srcAdd")
     ok("extra folder picker", "picker:src-c" in "".join(pg.evaluate("__log")))
-    ctx.close()
-    # delete original only after the ESC-param copy, and only when the checkbox is on
-    ctx,pg=page({"params":[["gone.xml",1,16]]}, picked=True)
-    pg.click("#card button[data-l=nl]"); pg.fill("#fn","Jan"); pg.fill("#lnm","P"); pg.click("#go"); pg.click("#cont"); pg.wait_for_selector("#latest")
-    pg.click("#delSrc")
-    ok("delete checkbox remembered", '"delSrc":true' in pg.evaluate("localStorage.getItem('esc_state')"))
-    pg.select_option("#fam", index=1); pg.select_option("#sub", index=1); pg.fill("#dos","D9"); pg.fill("#ser","S"); pg.fill("#ord","O")
-    pg.click("#latest"); pg.click("#latestUse"); pg.click("#save"); pg.wait_for_selector("#rSrcDel")
-    ok("original removed after verified copy", "gone.xml" not in pg.evaluate("Object.keys(__sources.pavis3.c)") and "D9" in pg.inner_text("#rParam"))
     ctx.close()
     # iPhone: no Chrome wall, file fallback, hint about Downloads and offline upload
     IOS="Mozilla/5.0 (iPhone; CPU iPhone OS 17_5 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.5 Mobile/15E148 Safari/604.1"

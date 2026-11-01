@@ -42,5 +42,5 @@
   var OE = {}; Object.defineProperty(window, "OE", { value: OE, writable: true });
   Object.defineProperty(OE, "idbGet", { get:function(){ return function(k){ return Promise.resolve(store[k]); }; }, set:function(){} });
   Object.defineProperty(OE, "idbSet", { get:function(){ return function(k,v){ store[k]=v; if(k==="dir"||k==="dirs") sessionStorage.setItem("dirPicked","1"); return Promise.resolve(); }; }, set:function(){} });
-  HTMLInputElement.prototype.click = function(){ if (this.type === "checkbox") return; window.__log.push("filepicker"); };
+  HTMLInputElement.prototype.click = function(){ window.__log.push("filepicker"); };
 })();
