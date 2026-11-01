@@ -414,7 +414,19 @@
         : '<div class="noimg">' + (f.fam ? x.noImg : "") + "</div>";
       var fn = famName(f), sn = subName(f);
       $("pathP").innerHTML = fn && d ? "📁 " + esc(OE.fs.label()) + (sn && f.file ? "<br>📄 " + esc(OE.fs.paramName(fn, sn, f.dossier, new Date(), f.file.name)) : "") : "";
+      if ($("file") && OE.fs.extList) $("file").accept = OE.fs.extList(f).join(",");
       $("fileT").innerHTML = f.file ? "📎 <b>" + esc(f.file.name) + "</b> (" + Math.max(1, Math.round(f.file.size / 1024)) + " kB)" : (OE.fs.state === "ios" ? x.iosPick : x.fileDrop);
+    }
+    function takeFile(file) {
+      if (!file) return;
+      if (OE.fs.allowedExt && !OE.fs.allowedExt(file.name, f)) {
+        if ($("file")) $("file").value = "";
+        OE.err(OE.fmt(x.badExt, { e: OE.fs.extList(f).join(", ") }));
+        return;
+      }
+      OE.err("");
+      f.file = file;
+      upd();
     }
     var chk = 0;
     function checkExisting() {
@@ -436,7 +448,7 @@
     $("famO").value = f.famOther; $("subO").value = f.subOther; $("dos").value = f.dossier;
     if ($("ser")) { $("ser").value = f.serial; $("ord").value = f.order; }
     function unsel() { if (mem.sel) { mem.sel = null; var e = $("exFiles"); if (e) e.remove(); drawSearch(); } }
-    fam.onchange = function () { unsel(); f.fam = fam.value; f.sub = esa() ? (f.fam || "") : ""; fillSubs(); upd(); checkExisting(); };
+    fam.onchange = function () { unsel(); f.fam = fam.value; f.sub = esa() ? (f.fam || "") : ""; fillSubs(); if (f.file && OE.fs.allowedExt && !OE.fs.allowedExt(f.file.name, f)) { f.file = null; OE.err(OE.fmt(x.badExt, { e: OE.fs.extList(f).join(", ") })); } upd(); checkExisting(); };
     sub.onchange = function () { f.sub = sub.value; upd(); };
     $("famO").oninput = function () { f.famOther = this.value; upd(); };
     $("famO").onchange = checkExisting;
@@ -445,11 +457,11 @@
     $("dos").onchange = checkExisting;
     if ($("ser")) $("ser").oninput = function () { f.serial = this.value; };
     if ($("ord")) $("ord").oninput = function () { f.order = this.value; };
-    $("file").onchange = function () { if (this.files[0]) { f.file = this.files[0]; upd(); } };
+    $("file").onchange = function () { if (this.files[0]) takeFile(this.files[0]); };
     var dr = $("drop");
     dr.ondragover = function (e) { e.preventDefault(); dr.classList.add("over"); };
     dr.ondragleave = function () { dr.classList.remove("over"); };
-    dr.ondrop = function (e) { e.preventDefault(); dr.classList.remove("over"); var fl = e.dataTransfer.files; if (fl && fl[0]) { f.file = fl[0]; upd(); } };
+    dr.ondrop = function (e) { e.preventDefault(); dr.classList.remove("over"); var fl = e.dataTransfer.files; if (fl && fl[0]) takeFile(fl[0]); };
     OE.bind("whoEdit", function () { OE._techBack = "form"; OE.go("tech"); });
     OE.bind("latest", function () { if (ios) { try { $("file").click(); } catch (e) {} return; } latestParam(x, function (file) { f.file = file; upd(); }); });
     if (!ios) drawSources(x);
@@ -496,12 +508,16 @@
     OE.bind("srcAdd", function () { F.addSource().then(function () { drawSources(OE.t()); }, OE.pickerFail); });
     OE.bind("renewAll", function () { F.renewAll().then(function () { drawSources(OE.t()); }, OE.pickerFail); });
   }
+  function pickerTypes(exts) {
+    return [{ description: "Parameter", accept: { "application/octet-stream": exts || [] } }];
+  }
   function pickManualFile(onFile) {
     if (OE.ios && OE.ios() || typeof window.showOpenFilePicker !== "function") { try { $("file").click(); } catch (e2) {} return; }
-    var t = OE.fs.fileTarget ? OE.fs.fileTarget(mem.form) : { id: "file-esc", starts: ["documents"] };
+    var t = OE.fs.fileTarget ? OE.fs.fileTarget(mem.form) : { id: "file-esc", starts: ["documents"], ext: [] };
     var starts = t.starts && t.starts.length ? t.starts : ["documents"];
+    var types = pickerTypes(t.ext || (OE.fs.extList ? OE.fs.extList(mem.form) : []));
     function attempt(i) {
-      return window.showOpenFilePicker({ id: t.id, startIn: starts[i], multiple: false }).catch(function (e) {
+      return window.showOpenFilePicker({ id: t.id, startIn: starts[i], multiple: false, types: types, excludeAcceptAllOption: true }).catch(function (e) {
         var handleFailed = starts[i] && typeof starts[i] !== "string" && (!e || e.name !== "AbortError");
         if (handleFailed && i + 1 < starts.length) return attempt(i + 1);
         throw e;
@@ -519,8 +535,8 @@
     // permission prompt: requestPermission needs this click (user gesture), so ask first
     var ready = F.root && F.state === "granted" ? F.ensure().then(function (ok) { return ok || F.renew().then(function () { return true; }); }) : F.renew().then(function () { return true; });
     box.innerHTML = '<p class="hint">' + esc(x.latestBusy) + "</p>";
-    ready.then(function () { return F.newestSource(); }).then(function (l) {
-      if (!l.length) { box.innerHTML = '<p class="hint" id="latestNone">' + esc(x.latestNone) + "</p>"; pickManualFile(use); return; }
+    ready.then(function () { return F.newestSource(mem.form); }).then(function (l) {
+      if (!l.length) { box.innerHTML = '<p class="hint" id="latestNone">' + esc(OE.fmt(x.latestNone, { e: (F.extList ? F.extList(mem.form) : []).join(", ") })) + "</p>"; pickManualFile(use); return; }
       function row(p, i) { return '<button type="button" data-li="' + i + '"><span><b>' + esc(p.name) + "</b></span><small>" + esc(p.srcLabel || "") + " · " + hm(p.time) + " · " + kb(p.size) + "</small></button>"; }
       function done(p) { if (p.dir && F.rememberSource) F.rememberSource(p.dir); else if (p.dir) F.lastSource = p.dir; box.innerHTML = ""; use(p.file); }
       if (l.length === 1) {
@@ -547,6 +563,7 @@
     req.push([f.file, x.needFile]);
     req.forEach(function (p) { if (!p[0]) missing.push(p[1]); });
     if (missing.length) { OE.err(OE.fmt(x.need, { f: missing.join(", ") })); return; }
+    if (f.file && F.allowedExt && !F.allowedExt(f.file.name, f)) { OE.err(OE.fmt(x.badExt, { e: F.extList(f).join(", ") })); return; }
     OE.err("");
     var now = new Date(), pname = F.paramName(fn, sn, f.dossier, now, f.file.name);
     if (F.state === "ios") { doSaveIos(x, f, fn, sn, now, pname); return; }

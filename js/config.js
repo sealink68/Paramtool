@@ -10,8 +10,8 @@ OE.CFG = {
   KEEP: 3,                      // parameter files kept per extension (case-insensitive) per dossier folder
   META: "_esc_info.json",
   PARAM_DIRS: { ESC: "ESC-param", ESA: "ESA-param" }, // flat folder inside projecten; no dossier subfolders
-  PARAM_EXT: [".xml", ".prd", ".dat", ".kmc", ".eep", ".mot"], // case-insensitive; .mhx is never a parameter file
-  PARAM_DENY: [".mhx"],
+  PARAM_EXT: [".xml", ".prd", ".dat", ".kmc", ".eep", ".mot"], // union of every device type; per device see FILE_GROUPS[].ext
+  PARAM_DENY: [".mhx"], // never a parameter file, for any device
   OTHER: "__other__",
   /* ESA shows only these systems (no ESC sub-models). ESC keeps OE.MODELS. */
   ESA: ["ES250 Proline Easy", "ES250/130 Proline", "ES250/180 Proline", "ES250/FST Proline", "ES400 Proline", "ES500 Proline"],
@@ -21,23 +21,28 @@ OE.CFG = {
     { key: "eeps", label: "EEPS", hint: "C:\\EEPS Files", startIn: "desktop" },
     { key: "downloads", label: "", hint: "", startIn: "downloads" } // picker opens in Downloads; the user must choose the OSI-param subfolder
   ],
-  /* "Ander bestand kiezen" (showOpenFilePicker). First matching group wins.
-     id: Chrome picker id, one remembered folder per group (passed as "file-<id>").
+  /* One row per device group. First match wins. Add a family or a submodel prefix here.
+     id: Chrome picker id, passed as "file-<id>" so each group remembers its own folder.
+     ext: parameter extensions for this device (case-insensitive). "Laatste parameterfile",
+          the manual picker and save all use it. .mhx is never allowed.
      line: "ESA" or "ESC".
-     families: catalog name or the typed "Ander…" name. prefixes: start of the family or submodel (TPB, ETS, PIL, EEP, …).
+     families: catalog name or the typed "Ander…" name. prefixes: start of the family or submodel.
      Leave both off to match the whole line (put that group last).
-     source / fallback: "downloads" = OSI-param handle, "eeps" = EEPS Files handle,
-     "program" = first discovered name in programs (the projects folder),
-     "last" = last source folder a parameter file was taken from on this line,
-     "param" = ESC-param or ESA-param. A missing handle tries the next step, then Documents. */
+     source / fallback: where "Ander bestand kiezen" starts.
+     scan: folders "Laatste parameterfile" reads. Omit to search every granted source.
+     "downloads" = OSI-param, "eeps" = EEPS Files, "program" = programs[] (Pavis3, Pavis96NG, …),
+     "last" = last source folder a file was taken from on this line, "param" = ESC-param or ESA-param. */
   FILE_GROUPS: [
-    { id: "proline", line: "ESA", source: "downloads", fallback: "param" },
-    { id: "pavis", line: "ESC", source: "program", programs: ["Pavis3", "Pavis96NG"],
-      families: ["Kerberos", "Kentaur", "Charon", "Argus", "Geryon", "Orthos"],
-      prefixes: ["TPB", "ETS", "PIL", "FTS", "FGE", "HTS", "HSD", "HSB", "SRD", "STS", "Argus"],
-      fallback: ["last", "param"] },
-    { id: "eeps", line: "ESC", source: "eeps", families: [], prefixes: ["EEP"], fallback: ["last", "param"] },
-    { id: "esc", line: "ESC", source: "last", fallback: "param" }
+    { id: "proline", line: "ESA", ext: [".xml"], source: "downloads", fallback: "param" },
+    { id: "eeps", line: "ESC", ext: [".kmc", ".eep"],
+      families: ["Kerberos"], prefixes: ["TPB"],
+      source: "eeps", programs: ["Pavis3", "Pavis96NG"], fallback: ["program", "last", "param"],
+      scan: ["eeps", "program"] },
+    { id: "pavis", line: "ESC", ext: [".prd", ".xml", ".dat", ".mot"],
+      families: ["Kentaur", "Charon", "Argus", "Geryon", "Orthos"],
+      prefixes: ["ETS", "PIL", "FTS", "FGE", "HTS", "HSD", "HSB", "SRD", "STS", "Argus"],
+      source: "program", programs: ["Pavis3", "Pavis96NG"], fallback: ["last", "param"] },
+    { id: "esc", line: "ESC", ext: [".prd", ".xml", ".dat", ".mot"], source: "last", fallback: "param" }
   ]
 };
 OE.catalog = function () {
@@ -94,7 +99,8 @@ OE.T = {
     exampleImg: "Voorbeeldafbeelding familie", noImg: "Geen afbeelding beschikbaar",
     save: "💾 Opslaan", saving: "Bezig met opslaan…",
     latest: "⬇ Laatste parameterfile ophalen", latestBusy: "Zoeken in de bronmappen…",
-    latestNone: "Geen parameterbestand (.xml, .prd, .dat, .kmc, .eep, .mot) gevonden in de toegestane bronmappen. .mhx wordt overgeslagen. Kies het bestand manueel of sta een bronmap toe.",
+    latestNone: "Geen parameterbestand ({e}) gevonden in de bronmappen voor dit toestel. .mhx wordt overgeslagen. Kies het bestand manueel of sta een bronmap toe.",
+    badExt: "Dit toestel gebruikt alleen {e}.",
     latestNoSrc: "Kies één keer C:\\Users\\Public\\Documents (de programmappen worden zelf gevonden), of kies het bestand manueel.",
     srcFound: "Gevonden programmappen", srcNone: "Nog geen map met ‘projects’ of ‘Projects’ gevonden.",
     latestOne: "Nieuwste parameterbestand:", latestMany: "Meerdere bestanden gevonden – kies er één:",
@@ -172,7 +178,8 @@ OE.T = {
     exampleImg: "Image d'exemple de la famille", noImg: "Pas d'image disponible",
     save: "💾 Enregistrer", saving: "Enregistrement…",
     latest: "⬇ Récupérer le dernier fichier de paramètres", latestBusy: "Recherche dans les dossiers source…",
-    latestNone: "Aucun fichier de paramètres (.xml, .prd, .dat, .kmc, .eep, .mot) trouvé dans les dossiers source autorisés. .mhx est ignoré. Choisissez le fichier manuellement ou autorisez un dossier source.",
+    latestNone: "Aucun fichier de paramètres ({e}) trouvé dans les dossiers source de cet appareil. .mhx est ignoré. Choisissez le fichier manuellement ou autorisez un dossier source.",
+    badExt: "Cet appareil n'utilise que {e}.",
     latestNoSrc: "Choisissez une fois C:\\Users\\Public\\Documents (les dossiers des programmes sont trouvés automatiquement), ou choisissez le fichier manuellement.",
     srcFound: "Dossiers de programmes trouvés", srcNone: "Aucun dossier « projects » ou « Projects » trouvé pour l'instant.",
     latestOne: "Fichier de paramètres le plus récent :", latestMany: "Plusieurs fichiers trouvés – choisissez-en un :",
@@ -256,9 +263,9 @@ OE.HELP = {
       "• Per dossier worden max. 3 parameterbestanden per bestandstype bewaard (bv. 3 × .xml en 3 × .cfg; .xml en .XML zijn hetzelfde type, bestanden zonder extensie vormen een eigen groep). Bij een 4e bestand van hetzelfde type wordt het oudste van dat type verwijderd (je krijgt eerst een melding). Het nieuwste van elk type is ‘actief bij laatste bezoek’.",
       "• Bovenaan: ESA of ESC. ESA toont enkel ES250 Proline Easy, ES250/130 Proline, ES250/180 Proline, ES250/FST Proline, ES400 Proline en ES500 Proline (geen ESC-submodellen, geen serie- of ordernummer). ESC toont de bestaande toestellen. De keuze wordt onthouden.",
       "• ‘⬇ Laatste parameterfile ophalen’: kies één keer C:\\Users\\Public\\Documents. De app zoekt zelf elke programmamap met een submap ‘projects’ of ‘Projects’ (nu Pavis3\\projects en Pavis96NG\\Projects, later ook nieuwe) en leest die recursief. Optioneel: Downloads\\OSI-param en C:\\EEPS Files. ‘+ Map toevoegen’ voor een andere map, bv. Flap Control Center.",
-      "• ‘Ander bestand kiezen’ opent in de map van het gekozen toestel. Proline: Downloads\\OSI-param, anders ESA-param. Gallenschütz (Kerberos, ETS, PIL, TPB en gelijkaardige modellen): Pavis3\\projects of Pavis96NG\\Projects. EEP-modellen: EEPS Files. Anders de laatst gebruikte ESC-bronmap, anders ESC-param. Chrome onthoudt de map per groep.",
+      "• ‘Ander bestand kiezen’ opent in de map van het gekozen toestel en toont alleen de juiste extensie. Kerberos: eerst C:\\EEPS Files, dan Pavis3\\projects of Pavis96NG\\Projects. Andere ESC-modellen (ETS, PIL, …): Pavis. Proline: Downloads\\OSI-param, anders ESA-param. Anders de laatst gebruikte ESC-bronmap, anders ESC-param. Chrome onthoudt de map per groep.",
       "• Bronmappen staan ingeklapt. Klik op ‘Bronmappen’ om ze te openen; open of dicht wordt onthouden. ‘Toestaan’ blijft zichtbaar als de browser opnieuw toestemming vraagt.",
-      "• Enkel .xml, .prd, .dat, .kmc, .eep en .mot (hoofdletters maken niet uit). .mhx wordt nooit genomen. Het nieuwste bestand wordt voorgesteld. Bij Opslaan komt het bestand vlak in projecten\\ESC-param of projecten\\ESA-param, met de naam Familie_Submodel_Dossier_datum. Het origineel blijft staan.",
+      "• Bestandstype per toestel (hoofdletters maken niet uit, .mhx nooit). Kerberos: alleen .kmc en .eep, gezocht in C:\\EEPS Files en in Pavis3\\projects of Pavis96NG\\Projects. Andere ESC-toestellen: .prd, .xml, .dat en .mot. Proline (ESA): alleen .xml. Bij Opslaan komt het bestand vlak in projecten\\ESC-param of projecten\\ESA-param, met de naam Familie_Submodel_Dossier_datum. Het origineel blijft staan.",
       "• iPhone/iPad: ‘Bestand kiezen’ uit Bestanden → Downloads. Deel of download daarna naar OneDrive ESC_Share of ESA_Share. Ruim Downloads zelf op. De adapter-wifi heeft geen internet; OneDrive uploadt pas als je weer online bent. De melding ‘open in Chrome’ blokkeert de iPhone niet.",
       "• Datum en tijd worden automatisch ingevuld.",
       "• Je naam en taal worden in deze browser onthouden. Bovenaan het formulier staat je naam met ‘Wijzigen’; de taal wissel je met NL / FR bovenaan (of via ⚙ Instellingen)."],
@@ -293,9 +300,9 @@ OE.HELP = {
       "• Au maximum 3 fichiers de paramètres sont conservés par dossier et par type de fichier (p. ex. 3 × .xml et 3 × .cfg ; .xml et .XML sont le même type, les fichiers sans extension forment un groupe à part). Au 4e fichier d'un même type, le plus ancien de ce type est supprimé (avec avertissement préalable). Le plus récent de chaque type est « actif lors de la dernière visite ».",
       "• En haut : ESA ou ESC. ESA n'affiche que ES250 Proline Easy, ES250/130 Proline, ES250/180 Proline, ES250/FST Proline, ES400 Proline et ES500 Proline (pas de sous-modèles ESC, pas de numéro de série ni de commande). ESC affiche les appareils existants. Le choix est mémorisé.",
       "• « ⬇ Récupérer le dernier fichier de paramètres » : choisissez une fois C:\\Users\\Public\\Documents. L'app trouve elle-même chaque dossier de programme qui contient « projects » ou « Projects » (aujourd'hui Pavis3\\projects et Pavis96NG\\Projects, plus tard aussi les nouveaux) et les lit récursivement. Facultatif : Téléchargements\\OSI-param et C:\\EEPS Files. « + Ajouter un dossier » pour un autre, p. ex. Flap Control Center.",
-      "• « Choisir un autre fichier » s'ouvre dans le dossier de l'appareil choisi. Proline : Téléchargements\\OSI-param, sinon ESA-param. Gallenschütz (Kerberos, ETS, PIL, TPB et modèles semblables) : Pavis3\\projects ou Pavis96NG\\Projects. Modèles EEP : EEPS Files. Sinon le dernier dossier source ESC utilisé, sinon ESC-param. Chrome mémorise le dossier par groupe.",
+      "• « Choisir un autre fichier » s'ouvre dans le dossier de l'appareil choisi et ne montre que la bonne extension. Kerberos : d'abord C:\\EEPS Files, puis Pavis3\\projects ou Pavis96NG\\Projects. Autres modèles ESC (ETS, PIL, …) : Pavis. Proline : Téléchargements\\OSI-param, sinon ESA-param. Sinon le dernier dossier source ESC utilisé, sinon ESC-param. Chrome mémorise le dossier par groupe.",
       "• Les dossiers source sont repliés. Cliquez sur « Dossiers source » pour les ouvrir ; l'état est mémorisé. « Autoriser » reste visible si le navigateur redemande l'autorisation.",
-      "• Uniquement .xml, .prd, .dat, .kmc, .eep et .mot (majuscules ou minuscules). .mhx n'est jamais pris. Le fichier le plus récent est proposé. À l'enregistrement le fichier est à plat dans projecten\\ESC-param ou projecten\\ESA-param, nommé Famille_Sous-modèle_Dossier_date. L'original reste.",
+      "• Type de fichier selon l'appareil (majuscules ou minuscules, jamais .mhx). Kerberos : seulement .kmc et .eep, cherchés dans C:\\EEPS Files et dans Pavis3\\projects ou Pavis96NG\\Projects. Autres appareils ESC : .prd, .xml, .dat et .mot. Proline (ESA) : seulement .xml. À l'enregistrement le fichier est à plat dans projecten\\ESC-param ou projecten\\ESA-param, nommé Famille_Sous-modèle_Dossier_date. L'original reste.",
       "• iPhone/iPad : « Choisir un fichier » depuis Fichiers → Téléchargements. Partagez ou téléchargez ensuite vers OneDrive ESC_Share ou ESA_Share. Videz Téléchargements vous-même. Le Wi-Fi de l'adaptateur n'a pas Internet ; OneDrive envoie les fichiers quand vous êtes de nouveau en ligne. L'avertissement « ouvrir dans Chrome » ne bloque pas l'iPhone.",
       "• La date et l'heure sont remplies automatiquement.",
       "• Votre nom et la langue sont mémorisés dans ce navigateur. En haut du formulaire figure votre nom avec « Modifier » ; changez la langue avec NL / FR en haut (ou via ⚙ Paramètres)."],

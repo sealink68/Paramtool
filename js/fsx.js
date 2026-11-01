@@ -139,13 +139,17 @@
     if (step === "documents" || step === "desktop") return step;
     return null;
   }
-  /* Where "Ander bestand kiezen" opens. { id, starts } from CFG.FILE_GROUPS. starts[0] is the best handle. */
-  F.fileTarget = function (form) {
-    var line = F.line(), fam = "", sub = "";
+  function formNames(form) {
+    var fam = "", sub = "";
     if (form) {
       fam = form.fam === C.OTHER ? String(form.famOther || "").trim() : String(form.fam || "");
       sub = form.sub === C.OTHER ? String(form.subOther || "").trim() : String(form.sub || "");
     }
+    return { fam: fam, sub: sub };
+  }
+  /* First FILE_GROUPS row that matches the selected device. */
+  F.deviceGroup = function (form) {
+    var line = F.line(), names = formNames(form), fam = names.fam, sub = names.sub;
     var groups = C.FILE_GROUPS || [], g = null;
     for (var i = 0; i < groups.length && !g; i++) {
       var cand = groups[i];
@@ -159,7 +163,20 @@
       });
       if (famHit || preHit) g = cand;
     }
-    if (!g) g = { id: line === "ESA" ? "proline" : "esc", source: "param", fallback: "documents" };
+    if (!g) g = { id: line === "ESA" ? "proline" : "esc", ext: line === "ESA" ? [".xml"] : [".prd", ".xml", ".dat", ".mot"], source: "param", fallback: "documents" };
+    return g;
+  };
+  function normExt(e) { e = String(e || "").toLowerCase(); return !e ? "" : (e.charAt(0) === "." ? e : "." + e); }
+  /* Extensions for the selected device. Without a form: every type the app can store. */
+  F.extList = function (form) {
+    var raw = form ? ((F.deviceGroup(form).ext) || []) : (C.PARAM_EXT || []);
+    var out = [];
+    raw.forEach(function (e) { e = normExt(e); if (e && out.indexOf(e) < 0 && (C.PARAM_DENY || []).indexOf(e) < 0) out.push(e); });
+    return out;
+  };
+  /* Where "Ander bestand kiezen" opens. { id, starts, ext } from CFG.FILE_GROUPS. starts[0] is the best handle. */
+  F.fileTarget = function (form) {
+    var g = F.deviceGroup(form);
     var steps = [g.source].concat(g.fallback ? (Array.isArray(g.fallback) ? g.fallback : [g.fallback]) : []);
     var starts = [];
     steps.forEach(function (step) {
@@ -167,7 +184,7 @@
       if (h && starts.indexOf(h) < 0) starts.push(h);
     });
     if (!starts.length || starts[starts.length - 1] !== "documents") starts.push("documents");
-    return { id: "file-" + (g.id || "esc"), starts: starts };
+    return { id: "file-" + (g.id || "esc"), starts: starts, ext: F.extList(form) };
   };
 
   /* Source folders (IndexedDB handles). Defaults are suggestions; the user must pick each one once. */
@@ -233,11 +250,45 @@
     F.sources.forEach(function (s) { if (s.key === key) s.handle = null; });
     return persistSources();
   };
-  F.allowedExt = function (name) {
+  /* form set: only that device's extensions. form omitted: any stored parameter type. .mhx never matches. */
+  F.allowedExt = function (name, form) {
     var e = F.extKey(name);
     if (!e || (C.PARAM_DENY || []).indexOf(e) >= 0) return false;
-    return (C.PARAM_EXT || []).indexOf(e) >= 0;
+    return F.extList(form).indexOf(e) >= 0;
   };
+  function sourceLabel(key, handle) {
+    var s = null;
+    (F.sources || []).forEach(function (x) { if (x.key === key) s = x; });
+    return (handle && handle.name) || (s && s.label) || key;
+  }
+  /* scan omitted: every discovered program folder plus every extra source. */
+  function rootsFor(group) {
+    var roots = [], seen = [];
+    function add(handle, label) {
+      if (!handle || seen.indexOf(handle) >= 0) return;
+      seen.push(handle);
+      roots.push({ handle: handle, label: label });
+    }
+    var scan = group && group.scan;
+    if (!scan || !scan.length) {
+      (F.programs || []).forEach(function (p) { add(p.handle, p.name + "\\" + p.folder); });
+      (F.sources || []).forEach(function (s) { if (s.handle && s.key !== "docs") add(s.handle, sourceLabel(s.key, s.handle)); });
+      return roots;
+    }
+    scan.forEach(function (step) {
+      if (step === "program") {
+        var names = ((group && group.programs) || []).map(function (n) { return String(n).toLowerCase(); });
+        (F.programs || []).forEach(function (p) {
+          if (names.length && names.indexOf(String(p.name).toLowerCase()) < 0) return;
+          add(p.handle, p.name + "\\" + p.folder);
+        });
+        return;
+      }
+      var h = sourceHandle(step);
+      if (h) add(h, sourceLabel(step, h));
+    });
+    return roots;
+  }
   /* Direct children of Public Documents that contain projects/Projects. */
   F.programs = [];
   F.discover = function () {
@@ -261,16 +312,14 @@
       })();
     }).catch(function () { return []; });
   };
-  /* Newest allowed parameter file: each discovered program folder, plus optional extras, recursive. .mhx never matches. */
-  F.newestSource = function () {
+  /* Newest parameter file for this device: only its extensions, and only the group's scan folders. .mhx never matches. */
+  F.newestSource = function (form) {
     return (async function () {
-      var best = null, roots = [];
-      (F.programs || []).forEach(function (p) { roots.push({ handle: p.handle, label: p.name + "\\" + p.folder }); });
-      (F.sources || []).forEach(function (s) { if (s.handle && s.key !== "docs") roots.push({ handle: s.handle, label: s.label || s.handle.name }); });
+      var best = null, roots = rootsFor(F.deviceGroup(form));
       async function walk(dir, label) {
         for await (var e of dir.values()) {
           if (e.kind === "directory") { try { await walk(e, label); } catch (err) {} continue; }
-          if (e.kind !== "file" || !F.allowedExt(e.name)) continue;
+          if (e.kind !== "file" || !F.allowedExt(e.name, form)) continue;
           var f = await e.getFile();
           var item = { name: e.name, file: f, time: f.lastModified, size: f.size, dir: dir, srcLabel: label };
           if (!best || item.time > best.time || (item.time === best.time && item.name < best.name)) best = item;

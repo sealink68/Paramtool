@@ -77,6 +77,12 @@
     window.__log.push("fileId:" + ((opts && opts.id) || ""));
     var st = opts && opts.startIn;
     window.__log.push("fileStart:" + startLabel(st));
+    var acc = [];
+    ((opts && opts.types) || []).forEach(function (t) {
+      var map = (t && t.accept) || {};
+      Object.keys(map).forEach(function (k) { (map[k] || []).forEach(function (ext) { acc.push(ext); }); });
+    });
+    window.__log.push("fileAccept:" + acc.join(","));
     var e = new Error("The user aborted a request."); e.name = "AbortError";
     return Promise.reject(e);
   };
