@@ -122,6 +122,7 @@
   }
   function descOf(m) { var d = m.desc || {}; return typeof d === "string" ? d : (d[OE.S.lang] || d.nl || d.en || ""); }
   function exampleFor(fam) { var l = (OE.catalog()[fam]) || []; for (var i = 0; i < l.length; i++) if (l[i].img && !l[i].example) return l[i].img; return null; }
+  function modelSrc(img) { if (!img) return ""; return "img/models/" + img + (/\.(jpe?g|png|webp)$/i.test(img) ? "" : ".jpg"); }
 
   /* ---------- existing-dossier search (cached scan of the projecten folder) ----------
      Hidden by default: the 🔍 button (#srchT) toggles it, ✕ / Escape closes it. Picking a dossier closes the search
@@ -260,7 +261,7 @@
       var info = subInfo(f), img = info && info.img, ex = info && info.example, cap = "";
       if (!info && f.fam && cat[f.fam] && !esa()) { img = exampleFor(f.fam); ex = true; }
       if (img) cap = (info ? esc(info.id) : esc(f.fam)) + (ex ? ' <em class="ex">' + x.exampleImg + "</em>" : "");
-      $("prod").innerHTML = img ? '<img id="prodImg" src="img/models/' + esc(img) + '.jpg" alt="' + esc(info ? info.id : f.fam) + '"><figcaption>' + cap + (info && info.desc ? '<small class="desc" id="prodDesc">' + esc(descOf(info)) + "</small>" : "") + "</figcaption>"
+      $("prod").innerHTML = img ? '<img id="prodImg" src="' + esc(modelSrc(img)) + '" alt="' + esc(info ? info.id : f.fam) + '"><figcaption>' + cap + (info && info.desc ? '<small class="desc" id="prodDesc">' + esc(descOf(info)) + "</small>" : "") + "</figcaption>"
         : '<div class="noimg">' + (f.fam ? x.noImg : "") + "</div>";
       var fn = famName(f), sn = subName(f);
       $("pathP").innerHTML = fn && d ? "📁 " + esc(OE.fs.label()) + (sn && f.file ? "<br>📄 " + esc(OE.fs.paramName(fn, sn, f.dossier, new Date(), f.file.name)) : "") : "";
@@ -401,7 +402,7 @@
         r.files = files; r.pdfName = F.pdfName(fn, sn, f.dossier);
         var meta = { app: C.APP, family: fn, submodel: sn, dossier: OE.safeName(f.dossier), dossierInput: f.dossier, serial: f.serial.trim(), order: f.order.trim(),
           technician: S.tech.first + " " + S.tech.last, updated: now.toISOString(), updatedHuman: OE.human(now), pdf: r.pdfName, files: files };
-        return (img ? OE.loadImage("img/models/" + img + ".jpg").catch(function () { return null; }) : Promise.resolve(null)).then(function (im) {
+        return (img ? OE.loadImage(modelSrc(img)).catch(function () { return null; }) : Promise.resolve(null)).then(function (im) {
           var blob = OE.buildPdf({ family: fn, sub: sn, dossier: OE.safeName(f.dossier), serial: meta.serial, order: meta.order, tech: meta.technician, updated: now, files: files, img: im, example: example });
           mem.pdfBlob = blob;
           return F.write(dir, r.pdfName, blob).then(function () { return F.write(dir, F.metaName(fn, sn, f.dossier), new Blob([JSON.stringify(meta, null, 2)], { type: "application/json" })); });
@@ -417,7 +418,7 @@
     var b = $("save"), S = OE.S, info = subInfo(f), img = info && info.img, example = !!(info && info.example);
     b.disabled = true; b.textContent = x.saving; OE.busy = true;
     var files = [{ name: pname, stamp: OE.stamp(now), ext: OE.fs.extKey(pname) }];
-    (img ? OE.loadImage("img/models/" + img + ".jpg").catch(function () { return null; }) : Promise.resolve(null)).then(function (im) {
+    (img ? OE.loadImage(modelSrc(img)).catch(function () { return null; }) : Promise.resolve(null)).then(function (im) {
       var blob = OE.buildPdf({ family: fn, sub: sn, dossier: OE.safeName(f.dossier), serial: f.serial.trim(), order: f.order.trim(), tech: S.tech.first + " " + S.tech.last, updated: now, files: files, img: im, example: example });
       mem.pdfBlob = blob;
       var pdfName = OE.fs.pdfName(fn, sn, f.dossier);

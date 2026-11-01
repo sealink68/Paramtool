@@ -25,7 +25,7 @@ OE.CFG = {
 OE.catalog = function () {
   if (OE.S && OE.S.line === "ESA") {
     var o = {};
-    OE.CFG.ESA.forEach(function (n) { o[n] = [{ id: n }]; });
+    OE.CFG.ESA.forEach(function (n) { o[n] = [{ id: n, img: "proline.webp" }]; });
     return o;
   }
   return OE.MODELS || {};

@@ -25,7 +25,8 @@
     var colW = 100, imgX = M + colW + 8, imgW = W - M - imgX, imgTop = y;
     if (d.img) {
       var maxH = 80, r = d.img.w / d.img.h, iw = imgW, ih = iw / r; if (ih > maxH) { ih = maxH; iw = ih * r; }
-      doc.addImage(d.img.data, "JPEG", imgX + (imgW - iw) / 2, imgTop, iw, ih);
+      var fmt = /^data:image\/png/i.test(d.img.data) ? "PNG" : /^data:image\/webp/i.test(d.img.data) ? "WEBP" : "JPEG";
+      doc.addImage(d.img.data, fmt, imgX + (imgW - iw) / 2, imgTop, iw, ih);
       if (d.example) { font("italic", 8, C.mu); doc.text(doc.splitTextToSize(clean(P.example), imgW), imgX, imgTop + ih + 4); }
     }
     function field(label, value) {
