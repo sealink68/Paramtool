@@ -9,6 +9,9 @@ echo.
 
 call :tree "%OneDriveCommercial%"
 call :tree "%USERPROFILE%\OneDrive - dormakaba Group"
+if not exist "%USERPROFILE%\Downloads\OSI-param" mkdir "%USERPROFILE%\Downloads\OSI-param"
+echo NL: Downloads\OSI-param klaar — %USERPROFILE%\Downloads\OSI-param
+echo FR: Downloads\OSI-param prêt — %USERPROFILE%\Downloads\OSI-param
 
 set "CHROME="
 if exist "%ProgramFiles%\Google\Chrome\Application\chrome.exe" set "CHROME=%ProgramFiles%\Google\Chrome\Application\chrome.exe"

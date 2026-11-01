@@ -81,6 +81,17 @@
   OE.go = function (screen, dir) { OE.S.screen = screen; OE.save(); OE.render(dir); };
   OE.bind = function (id, fn) { var e = OE.$(id); if (e) e.onclick = fn; };
   OE.err = function (msg, id) { var e = OE.$(id || "err"); if (e) e.innerHTML = msg ? '<div class="err">⚠️ ' + OE.esc(msg) + "</div>" : ""; };
+  /* User cancel stays quiet. Chrome blocking Downloads (or another system folder) is a SecurityError, sometimes surfaced as an abort. */
+  OE.pickerFail = function (e) {
+    if (!e) return;
+    var name = e.name || "", msg = String(e.message || "");
+    var userAbort = name === "AbortError" && !/system file/i.test(msg);
+    if (userAbort) return;
+    var x = OE.t();
+    if (name === "SecurityError" || /system file/i.test(msg)) { OE.err(x.folderBlocked); return; }
+    if (msg === "denied" || name === "NotAllowedError") { OE.err(x.folderDenied); return; }
+    OE.err(OE.fmt(x.folderErr, { e: msg || name || e }));
+  };
   OE.confirmModal = function (text, onYes) {
     var m = OE.$("modal"), x = OE.t(); m.onclick = null; m.dataset.help = "";
     m.innerHTML = '<div class="card" role="dialog" aria-modal="true"><p id="mtext" class="pre-line">' + OE.esc(text) + '</p><div class="btns"><button class="btn sec" id="mno">' + x.cancel + '</button><button class="btn ok" id="myes">' + x.ok + "</button></div></div>";

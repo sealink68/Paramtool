@@ -130,7 +130,7 @@
       if (ready) h += '<div class="btns"><button class="btn pri" id="wizNext">' + esc(x.wizNext) + "</button></div>";
       h += batLink() + '<div id="err"></div><div class="btns"><button class="btn sec" id="wizBack">‹ ' + esc(x.back) + "</button></div>";
       $("card").innerHTML = wizFrame(4, 4, h);
-      function fail(e) { if (e && e.name === "AbortError") return; OE.err(e && e.message === "denied" ? x.folderDenied : OE.fmt(x.folderErr, { e: (e && e.message) || e })); }
+      function fail(e) { OE.pickerFail(e); }
       function afterShare() { if (F.line() === "ESA") finishWizard(); else goStep("docs"); }
       OE.bind("pick", function () { F.pick().then(afterShare, fail); });
       OE.bind("pickOther", function () { F.pick("ESA").then(function () { SC.setup(); }, fail); });
@@ -153,7 +153,7 @@
         batLink() + '<div id="err"></div><div class="btns"><button class="btn sec" id="wizBack">‹ ' + esc(x.back) + '</button><button class="btn pri" id="wizDone">' + esc(x.wizDone) + "</button></div>";
       $("card").innerHTML = wizFrame(4, 4, h);
       [].forEach.call($("card").querySelectorAll("[data-allow]"), function (b) {
-        b.onclick = function () { F.allowSource(b.getAttribute("data-allow")).then(function () { SC.setup(); }, function (e) { if (e && e.name === "AbortError") return; OE.err(OE.fmt(x.latestErr, { e: (e && e.message) || e })); }); };
+        b.onclick = function () { F.allowSource(b.getAttribute("data-allow")).then(function () { SC.setup(); }, OE.pickerFail); };
       });
       OE.bind("wizBack", function () { goStep("share"); });
       OE.bind("wizDone", finishWizard);
@@ -178,7 +178,7 @@
     if (!(F._dirs && F._dirs[other])) h += '<button class="btn sec big" id="pickOther">' + esc(OE.fmt(x.folderOther, { s: C.SHARES[other] })) + "</button>";
     h += '<div id="err"></div></div>';
     $("card").innerHTML = h;
-    function fail(e) { if (e && e.name === "AbortError") return; OE.err(e && e.message === "denied" ? x.folderDenied : OE.fmt(x.folderErr, { e: (e && e.message) || e })); }
+    function fail(e) { OE.pickerFail(e); }
     OE.bind("pick", function () { F.pick().then(function () { OE.go("form"); }, fail); });
     OE.bind("pickOther", function () { F.pick(other).then(function () { SC.folder(); }, fail); });
     OE.bind("renew", function () { F.renewAll().then(function () { if (F.state === "granted") OE.go("form"); else SC.folder(); }, fail); });
@@ -463,13 +463,13 @@
       (prog ? '<div class="lbl">' + esc(x.srcFound) + '</div><ul class="list" id="progList">' + prog + "</ul>" : "") +
       '<button type="button" class="small" id="srcAdd">' + esc(x.srcAdd) + "</button>";
     [].forEach.call(box.querySelectorAll("[data-allow]"), function (b) {
-      b.onclick = function () { F.allowSource(b.getAttribute("data-allow")).then(function () { drawSources(OE.t()); }, function (e) { if (e && e.name === "AbortError") return; OE.err(e && e.message === "denied" ? x.folderDenied : OE.fmt(x.latestErr, { e: (e && e.message) || e })); }); };
+      b.onclick = function () { F.allowSource(b.getAttribute("data-allow")).then(function () { drawSources(OE.t()); }, OE.pickerFail); };
     });
     [].forEach.call(box.querySelectorAll("[data-rm]"), function (b) {
       b.onclick = function () { F.dropSource(b.getAttribute("data-rm")).then(function () { drawSources(OE.t()); }); };
     });
-    OE.bind("srcAdd", function () { F.addSource().then(function () { drawSources(OE.t()); }, function (e) { if (e && e.name === "AbortError") return; }); });
-    OE.bind("renewAll", function () { F.renewAll().then(function () { drawSources(OE.t()); }, function (e) { if (e && e.name === "AbortError") return; }); });
+    OE.bind("srcAdd", function () { F.addSource().then(function () { drawSources(OE.t()); }, OE.pickerFail); });
+    OE.bind("renewAll", function () { F.renewAll().then(function () { drawSources(OE.t()); }, OE.pickerFail); });
   }
   function latestParam(x, use) {
     var F = OE.fs, box = $("latestBox");

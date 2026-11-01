@@ -56,7 +56,7 @@ with sync_playwright() as p:
     pg.click("#latest"); pg.wait_for_selector("#latestNone")
     box=pg.inner_text("#srcBox")
     ok("none: one Documents pick, optional extras, no auto file dialog", "Public Documents" in box and "C:\\Users\\Public\\Documents" in box and "Toestaan" in box and "EEPS" in box and "filepicker" not in pg.evaluate("__log"))
-    ok("none: downloads hint names the adapter", "192.168.10.4" in pg.inner_text("#srcBox") and "EEPS" in pg.inner_text("#srcBox"))
+    ok("none: OSI-param hint, not the Downloads folder itself", "OSI-param" in pg.inner_text("#srcBox") and "192.168.10.4" in pg.inner_text("#srcBox") and "EEPS" in pg.inner_text("#srcBox"))
     # 2 remembered handle, granted: reload goes directly to form, no picker
     pg.reload(); pg.wait_for_selector("#latest")
     ok("remembered handle: form after reload without picker", pg.evaluate("__log").count("picker")==0)
@@ -166,6 +166,14 @@ with sync_playwright() as p:
     ok("source shows as allowed", "✓" in pg.inner_text("[data-allow=docs]"))
     pg.click("#srcAdd")
     ok("extra folder picker", "picker:src-c" in "".join(pg.evaluate("__log")))
+    pg.evaluate("""() => { window.showDirectoryPicker = function(){ var e = new Error('The user selected a folder that contains system files'); e.name = 'SecurityError'; return Promise.reject(e); }; }""")
+    pg.click("[data-allow=downloads]")
+    pg.wait_for_selector("#err")
+    ok("blocked system folder explains OSI-param", "OSI-param" in pg.inner_text("#err") and "systeem" in pg.inner_text("#err").lower())
+    pg.evaluate("""() => { window.showDirectoryPicker = function(){ var e = new Error('The user aborted a request.'); e.name = 'AbortError'; return Promise.reject(e); }; }""")
+    pg.evaluate("() => { document.getElementById('err').innerHTML = ''; }")
+    pg.click("[data-allow=eeps]")
+    ok("plain cancel stays quiet", pg.inner_text("#err").strip()=="")
     ctx.close()
     # iPhone: no Chrome wall, file fallback, hint about Downloads and offline upload
     IOS="Mozilla/5.0 (iPhone; CPU iPhone OS 17_5 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.5 Mobile/15E148 Safari/604.1"
