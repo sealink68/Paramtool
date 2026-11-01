@@ -24,9 +24,22 @@
     cfg.params.forEach(function(f){ e.c[f[0]]=new Fil(f[0], "x".repeat(f[2]||10), Date.now()-f[1]*60000); }); }
   if (cfg.sub && root.c.projecten && root.c.projecten.c["ESC-param"]) { root.c.projecten.c["ESC-param"].c.sub = new Dir("sub"); root.c.projecten.c["ESC-param"].c.sub.c["in.xml"]=new Fil("in.xml","a",Date.now()); }
   var srcDirs = {};
+  var docs = new Dir("Documents");
   function seed(key, files) { var d = srcDirs[key] || new Dir(key); srcDirs[key] = d; (files||[]).forEach(function(f){ addFile(d, f[0], f[1], f[2]); }); return d; }
-  if (cfg.sources) Object.keys(cfg.sources).forEach(function(k){ seed(k, cfg.sources[k]); });
-  if (cfg.params) seed("pavis3", cfg.params);
+  function placeProgram(program, folderName, files) {
+    if (!docs.c[program]) docs.c[program] = new Dir(program);
+    if (!docs.c[program].c[folderName]) docs.c[program].c[folderName] = new Dir(folderName);
+    (files||[]).forEach(function(f){ addFile(docs.c[program].c[folderName], f[0], f[1], f[2]); });
+  }
+  if (cfg.params) placeProgram("Pavis3", "projects", cfg.params);
+  if (cfg.sources) {
+    if (cfg.sources.pavis3) placeProgram("Pavis3", "projects", cfg.sources.pavis3);
+    if (cfg.sources.pavis96) placeProgram("Pavis96NG", "Projects", cfg.sources.pavis96);
+    if (cfg.sources.downloads) seed("downloads", cfg.sources.downloads);
+    if (cfg.sources.eeps) seed("eeps", cfg.sources.eeps);
+  }
+  if (cfg.docsPaths) cfg.docsPaths.forEach(function(f){ addFile(docs, f[0], f[1], f[2]); });
+  if (cfg.params || (cfg.sources && (cfg.sources.pavis3 || cfg.sources.pavis96)) || cfg.docsPaths) srcDirs.docs = docs;
   window.__root = root; window.__roots = { ESC: root, ESA: esa }; window.__sources = srcDirs;
   window.showDirectoryPicker = function(opts){
     var id = (opts && opts.id) || "";
@@ -37,7 +50,7 @@
   };
   var store = {}; if (sessionStorage.getItem("dirPicked")) store.dir = root;
   var saved = [];
-  Object.keys(srcDirs).forEach(function(k){ if (cfg.params || (cfg.sources && cfg.sources[k])) saved.push({ key: k, label: k === "downloads" ? "" : k, hint: "", handle: srcDirs[k] }); });
+  Object.keys(srcDirs).forEach(function(k){ saved.push({ key: k, label: k === "downloads" ? "" : (k === "docs" ? "Public Documents" : k), hint: "", handle: srcDirs[k] }); });
   if (saved.length) store.sources = saved;
   var OE = {}; Object.defineProperty(window, "OE", { value: OE, writable: true });
   Object.defineProperty(OE, "idbGet", { get:function(){ return function(k){ return Promise.resolve(store[k]); }; }, set:function(){} });

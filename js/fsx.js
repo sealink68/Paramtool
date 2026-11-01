@@ -8,17 +8,28 @@
     var o = { mode: "readwrite" };
     return h.queryPermission(o).then(function (p) { return p === "granted" || !ask ? p : h.requestPermission(o); });
   }
-  /* ESC_Share -> its "projecten" subfolder (created if missing); a folder already named "projecten" is used as is. */
-  function useHandle(h) {
-    F.picked = h;
-    var p = h.name.toLowerCase() === C.SUBDIR ? Promise.resolve(h) : h.getDirectoryHandle(C.SUBDIR, { create: true });
-    return p.then(function (r) {
-      F.root = r; F.state = "granted";
-      return r.getDirectoryHandle(C.PARAM_DIR, { create: true }).catch(function () {}).then(function () { return r; });
-    });
-  }
   F.line = function () { return OE.S && OE.S.line === "ESA" ? "ESA" : "ESC"; };
   F.shareName = function () { return (C.SHARES && C.SHARES[F.line()]) || "ESC_Share"; };
+  F.paramDirName = function (line) { var k = line || F.line(); return (C.PARAM_DIRS && C.PARAM_DIRS[k]) || "ESC-param"; };
+  /* Share root -> projecten/<ESC-param|ESA-param>, created if missing. F.root is that flat param folder. */
+  function ensureShare(h, line) {
+    var name = F.paramDirName(line);
+    return h.getDirectoryHandle(C.SUBDIR, { create: true }).then(function (proj) {
+      return proj.getDirectoryHandle(name, { create: true });
+    });
+  }
+  function useHandle(h) {
+    F.picked = h;
+    return ensureShare(h, F.line()).then(function (param) { F.root = param; F.state = "granted"; return param; });
+  }
+  F.ensureAllShares = function () {
+    var map = F._dirs || {}, jobs = [];
+    ["ESC", "ESA"].forEach(function (line) {
+      if (!map[line]) return;
+      jobs.push(perm(map[line], false).then(function (p) { return p === "granted" ? ensureShare(map[line], line) : null; }).catch(function () {}));
+    });
+    return Promise.all(jobs);
+  };
   function saveDirs(map) {
     F._dirs = map || {};
     var jobs = [OE.idbSet("dirs", F._dirs).catch(function () {})];
@@ -44,28 +55,46 @@
     }).catch(function () { F.picked = null; F.root = null; F.state = "none"; return F.state; });
   };
   F.init = function () {
-    return Promise.all([F.bindLine(), F.loadSources()]).then(function () { return F.state; });
+    return F.loadSources().then(function () { return F.bindLine(); }).then(function () { return F.ensureAllShares(); })
+      .then(function () { return F.discover(); }).then(function () { return F.refreshPerm(); }).then(function () { return F.state; });
   };
-  F.pick = function () { // must run inside a user gesture
-    var id = F.line() === "ESA" ? "esa-share" : "esc-share";
+  F.pick = function (line) { // must run inside a user gesture; line defaults to the active ESA/ESC switch
+    var which = line === "ESA" || line === "ESC" ? line : F.line();
+    var id = which === "ESA" ? "esa-share" : "esc-share";
     return window.showDirectoryPicker({ id: id, mode: "readwrite" }).then(function (h) {
       return perm(h, true).then(function (p) {
         if (p !== "granted") throw new Error("denied");
-        var map = F._dirs || {}; map[F.line()] = h;
-        return saveDirs(map).then(function () { return useHandle(h); });
+        var map = F._dirs || {}; map[which] = h;
+        return saveDirs(map).then(function () { return which === F.line() ? useHandle(h) : ensureShare(h, which); });
       });
     });
   };
-  F.renew = function () { // user gesture
-    return perm(F.picked, true).then(function (p) { if (p !== "granted") throw new Error("denied"); return useHandle(F.picked); });
+  F.storedHandles = function () {
+    var list = [], map = F._dirs || {};
+    if (map.ESC) list.push(map.ESC);
+    if (map.ESA) list.push(map.ESA);
+    (F.sources || []).forEach(function (s) { if (s.handle) list.push(s.handle); });
+    return list;
   };
+  F.refreshPerm = function () {
+    return Promise.all(F.storedHandles().map(function (h) {
+      return perm(h, false).then(function (p) { return p !== "granted"; });
+    })).then(function (flags) { F._pending = flags.filter(Boolean).length; return F._pending; }).catch(function () { F._pending = 0; return 0; });
+  };
+  /* One user gesture: requestPermission for every stored handle that is not granted yet. */
+  F.renewAll = function () {
+    return F.storedHandles().reduce(function (p, h) {
+      return p.then(function () { return perm(h, false).then(function (st) { return st === "granted" ? st : perm(h, true); }); });
+    }, Promise.resolve()).then(function () { return F.bindLine(); }).then(function () { return F.ensureAllShares(); }).then(function () { return F.discover(); }).then(function () { return F.refreshPerm(); });
+  };
+  F.renew = function () { return F.renewAll(); };
   F.ensure = function () { // before a write: still allowed?
     if (!F.picked) return Promise.resolve(false);
     return perm(F.picked, false).then(function (p) { if (p !== "granted") F.state = "prompt"; return p === "granted"; });
   };
   F.label = function () {
     if (!F.picked) return "";
-    return F.picked.name.toLowerCase() === C.SUBDIR ? F.picked.name : F.picked.name + "\\" + C.SUBDIR;
+    return F.shareName() + "\\" + C.SUBDIR + "\\" + F.paramDirName();
   };
 
   /* Source folders (IndexedDB handles). Defaults are suggestions; the user must pick each one once. */
@@ -102,7 +131,7 @@
       return perm(h, true).then(function (p) {
         if (p !== "granted") throw new Error("denied");
         s.handle = h; if (!s.label) s.label = h.name;
-        return persistSources().then(function () { return s; });
+        return persistSources().then(function () { return s.key === "docs" ? F.discover() : null; }).then(function () { return F.refreshPerm(); }).then(function () { return s; });
       });
     });
   };
@@ -127,36 +156,57 @@
     if (!e || (C.PARAM_DENY || []).indexOf(e) >= 0) return false;
     return (C.PARAM_EXT || []).indexOf(e) >= 0;
   };
-  /* Newest allowed parameter file across all granted source folders, recursive. .mhx never matches. */
+  /* Direct children of Public Documents that contain projects/Projects. */
+  F.programs = [];
+  F.discover = function () {
+    var docs = null; F.sources.forEach(function (s) { if (s.key === "docs") docs = s; });
+    F.programs = [];
+    if (!docs || !docs.handle) return Promise.resolve([]);
+    return perm(docs.handle, false).then(function (p) {
+      if (p !== "granted") return [];
+      return (async function () {
+        var found = [];
+        for await (var e of docs.handle.values()) {
+          if (e.kind !== "directory") continue;
+          var proj = null;
+          try {
+            for await (var c of e.values()) { if (c.kind === "directory" && c.name.toLowerCase() === "projects") { proj = c; break; } }
+          } catch (err) {}
+          if (proj) found.push({ name: e.name, folder: proj.name, handle: proj });
+        }
+        found.sort(function (a, b) { return a.name < b.name ? -1 : 1; });
+        F.programs = found; return found;
+      })();
+    }).catch(function () { return []; });
+  };
+  /* Newest allowed parameter file: each discovered program folder, plus optional extras, recursive. .mhx never matches. */
   F.newestSource = function () {
     return (async function () {
-      var best = null, list = F.sources.filter(function (s) { return s.handle; });
-      async function walk(dir, src) {
+      var best = null, roots = [];
+      (F.programs || []).forEach(function (p) { roots.push({ handle: p.handle, label: p.name + "\\" + p.folder }); });
+      (F.sources || []).forEach(function (s) { if (s.handle && s.key !== "docs") roots.push({ handle: s.handle, label: s.label || s.handle.name }); });
+      async function walk(dir, label) {
         for await (var e of dir.values()) {
-          if (e.kind === "directory") { try { await walk(e, src); } catch (err) {} continue; }
+          if (e.kind === "directory") { try { await walk(e, label); } catch (err) {} continue; }
           if (e.kind !== "file" || !F.allowedExt(e.name)) continue;
           var f = await e.getFile();
-          var item = { name: e.name, file: f, time: f.lastModified, size: f.size, dir: dir, srcLabel: src.label || (src.handle && src.handle.name) || "" };
+          var item = { name: e.name, file: f, time: f.lastModified, size: f.size, dir: dir, srcLabel: label };
           if (!best || item.time > best.time || (item.time === best.time && item.name < best.name)) best = item;
         }
       }
-      for (var i = 0; i < list.length; i++) {
-        var src = list[i];
-        try { if ((await perm(src.handle, false)) !== "granted") continue; await walk(src.handle, src); } catch (e) {}
+      for (var i = 0; i < roots.length; i++) {
+        try { if ((await perm(roots[i].handle, false)) !== "granted") continue; await walk(roots[i].handle, roots[i].label); } catch (e) {}
       }
       return best ? [best] : [];
     })();
   };
-  /* Copy the renamed parameter file into projecten/ESC-param and check the written size. */
+  /* The parameter file is written flat into the param folder; this only checks that size. */
   F.storeParam = function (name, data) {
     var want = data && data.size != null ? data.size : null;
-    return F.root.getDirectoryHandle(C.PARAM_DIR, { create: true }).then(function (d) {
-      return F.write(d, name, data).then(function () {
-        return d.getFileHandle(name).then(function (fh) { return fh.getFile(); }).then(function (got) {
-          if (want != null && got.size !== want) throw new Error("verify");
-          return got;
-        });
-      });
+    if (!F.root) return Promise.reject(new Error("param"));
+    return F.root.getFileHandle(name).then(function (fh) { return fh.getFile(); }).then(function (got) {
+      if (want != null && got.size !== want) throw new Error("verify");
+      return got;
     });
   };
 
@@ -191,10 +241,9 @@
       return out;
     })();
   };
-  F.dossierDir = function (fam, dos, create) {
-    var o = { create: !!create };
-    return F.root.getDirectoryHandle(OE.safeName(fam, true), o).then(function (d) { return d.getDirectoryHandle(OE.safeName(dos), o); });
-  };
+  F.metaName = function (fam, sub, dos) { return F.base(fam, sub, dos) + "_esc_info.json"; };
+  /* All saves are flat in the param folder: no Family/Dossier directories. */
+  F.dossierDir = function () { return Promise.resolve(F.root); };
   F.exists = function (dir, name) { return dir.getFileHandle(name).then(function () { return true; }, function () { return false; }); };
   F.write = function (dir, name, data) {
     return dir.getFileHandle(name, { create: true }).then(function (fh) {
@@ -203,39 +252,44 @@
   };
   F.readMeta = function (fam, dos) {
     if (!F.root || !fam || !OE.safeName(dos)) return Promise.resolve(null);
-    return F.dossierDir(fam, dos, false).then(function (d) { return d.getFileHandle(C.META); })
-      .then(function (fh) { return fh.getFile(); }).then(function (f) { return f.text(); }).then(JSON.parse)
-      .catch(function () { return null; });
-  };
-  /* All existing dossiers: projecten/<Family>/<Dossier>/ -> _esc_info.json if present, else folder name + newest
-     parameter file. Newest first. */
-  F.scan = function () {
-    var out = [], STAMP = /_(\d{4}-\d\d-\d\d_\d{4})(\.[^.]+)?$/;
-    function toIso(st) { var m = /^(\d{4})-(\d\d)-(\d\d)_(\d\d)(\d\d)$/.exec(st || ""); return m ? new Date(+m[1], m[2] - 1, +m[3], +m[4], +m[5]).toISOString() : ""; }
+    var wantF = OE.safeName(fam, true), wantD = OE.safeName(dos);
     return (async function () {
-      for await (var fd of F.root.values()) {
-        if (fd.kind !== "directory") continue;
-        for await (var dd of fd.values()) {
-          if (dd.kind !== "directory") continue;
-          var meta = null, files = [];
-          try { meta = JSON.parse(await (await (await dd.getFileHandle(C.META)).getFile()).text()); } catch (e) { meta = null; }
-          try { files = await F.listParams(dd, fd.name, dd.name); } catch (e) { files = []; }
-          if (!files.length) { // fall back: any file with a timestamp in the name
-            for await (var e of dd.values()) { var m = e.kind === "file" && STAMP.exec(e.name); if (m) files.push({ name: e.name, stamp: m[1], ext: F.extKey(e.name) }); }
-            files.sort(function (a, b) { return a.stamp < b.stamp ? 1 : -1; });
-          }
-          var m2 = meta || {};
-          out.push({ family: fd.name, folder: dd.name, dossier: m2.dossierInput || m2.dossier || dd.name, sub: m2.submodel || "", serial: m2.serial || "", order: m2.order || "",
-            updated: m2.updated || toIso(files[0] && files[0].stamp), files: F.retain(files).keep, meta: !!meta });
-        }
+      for await (var e of F.root.values()) {
+        if (e.kind !== "file" || !/_esc_info\.json$/i.test(e.name)) continue;
+        try {
+          var m = JSON.parse(await (await e.getFile()).text());
+          if (OE.safeName(m.family, true) === wantF && (OE.safeName(m.dossier) === wantD || OE.safeName(m.dossierInput) === wantD)) return m;
+        } catch (err) {}
       }
+      return null;
+    })();
+  };
+  /* Existing dossiers from the flat param folder (metadata files + timestamped parameter files). Newest first. */
+  F.scan = function () {
+    function toIso(st) { var m = /^(\d{4})-(\d\d)-(\d\d)_(\d\d)(\d\d)$/.exec(st || ""); return m ? new Date(+m[1], m[2] - 1, +m[3], +m[4], +m[5]).toISOString() : ""; }
+    if (!F.root) return Promise.resolve([]);
+    return (async function () {
+      var metas = [], params = [];
+      for await (var e of F.root.values()) {
+        if (e.kind !== "file") continue;
+        if (/_esc_info\.json$/i.test(e.name)) { try { metas.push(JSON.parse(await (await e.getFile()).text())); } catch (err) {} continue; }
+        var m = /_(\d{4}-\d\d-\d\d_\d{4})(\.[^.]+)?$/.exec(e.name);
+        if (m && F.allowedExt(e.name)) params.push({ name: e.name, stamp: m[1], ext: F.extKey(e.name) });
+      }
+      var out = metas.map(function (m2) {
+        var base = OE.safeName(m2.family, true) + "_", dos = OE.safeName(m2.dossier);
+        var files = params.filter(function (f) { return f.name.indexOf(base) === 0 && f.name.indexOf("_" + dos + "_") > 0; });
+        files.sort(function (a, b) { return a.stamp < b.stamp ? 1 : a.stamp > b.stamp ? -1 : 0; });
+        return { family: m2.family, folder: dos, dossier: m2.dossierInput || m2.dossier, sub: m2.submodel || "", serial: m2.serial || "", order: m2.order || "",
+          updated: m2.updated || toIso(files[0] && files[0].stamp), files: F.retain(files).keep, meta: true };
+      });
       out.sort(function (a, b) { return a.updated < b.updated ? 1 : a.updated > b.updated ? -1 : 0; });
       return out;
     })();
   };
   /* Which file(s) would be removed if a new one named `name` is added. */
   F.wouldDelete = function (fam, dos, name) {
-    return F.dossierDir(fam, dos, false).then(function (d) { return F.listParams(d, fam, dos); }, function () { return []; }).then(function (l) {
+    return F.dossierDir().then(function (d) { return d ? F.listParams(d, fam, dos) : []; }, function () { return []; }).then(function (l) {
       var st = /_(\d{4}-\d\d-\d\d_\d{4})(\.[^.]+)?$/.exec(name)[1];
       var all = l.filter(function (f) { return f.name !== name; }).concat([{ name: name, stamp: st }]);
       all.sort(function (a, b) { return a.stamp < b.stamp ? 1 : a.stamp > b.stamp ? -1 : (a.name < b.name ? 1 : -1); });

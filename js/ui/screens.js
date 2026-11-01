@@ -40,16 +40,20 @@
       h = '<div class="narrow"><h2 class="q">⚠️ ' + x.unsupH + '</h2><div class="err" id="unsup">' + esc(x.unsupP) + "</div></div>";
       $("card").innerHTML = h; return;
     }
-    h = '<div class="narrow"><h2 class="q">' + x.folderH + '</h2><p class="hint" id="shareNow" style="margin-top:-8px">' + esc(OE.fmt(x.shareNow, { s: F.shareName() })) + "</p><p class=\"hint\">" + esc(OE.fmt(x.folderP, { s: F.shareName() })) + "</p>";
+    var other = F.line() === "ESA" ? "ESC" : "ESA", pName = F.paramDirName();
+    h = '<div class="narrow"><h2 class="q">' + x.folderH + '</h2><p class="hint" id="shareNow" style="margin-top:-8px">' + esc(OE.fmt(x.shareNow, { s: F.shareName(), p: pName })) + "</p><p class=\"hint\">" + esc(OE.fmt(x.folderP, { s: F.shareName(), p: pName })) + "</p>";
     if (F.picked) h += '<div class="wosel"><div><small>' + x.folderNow + '</small><b id="fname">📁 ' + esc(F.picked.name) + "</b>" +
-      (st === "granted" ? "<small>→ " + x.folderUse + ": " + esc(F.label()) + "</small>" : "") + "</div></div>";
+      (st === "granted" ? "<small>→ " + esc(F.label()) + "</small>" : "") + "</div></div>";
     if (st === "prompt") h += '<p class="hint">' + x.folderRenewP + '</p><button class="btn pri big" id="renew">' + x.folderRenew + "</button>";
     if (st === "granted") h += '<button class="btn ok big" id="cont">' + x.folderOk + " ›</button>";
-    h += '<button class="btn ' + (st === "none" ? "pri" : "sec") + ' big" id="pick">' + (F.picked ? x.folderChange : x.folderPick) + '</button><div id="err"></div></div>';
+    h += '<button class="btn ' + (st === "none" ? "pri" : "sec") + ' big" id="pick">' + esc(OE.fmt(F.picked ? x.folderChange : x.folderPick, { s: F.shareName() })) + "</button>";
+    if (!(F._dirs && F._dirs[other])) h += '<button class="btn sec big" id="pickOther">' + esc(OE.fmt(x.folderOther, { s: C.SHARES[other] })) + "</button>";
+    h += '<div id="err"></div></div>';
     $("card").innerHTML = h;
     function fail(e) { if (e && e.name === "AbortError") return; OE.err(e && e.message === "denied" ? x.folderDenied : OE.fmt(x.folderErr, { e: (e && e.message) || e })); }
     OE.bind("pick", function () { F.pick().then(function () { OE.go("form"); }, fail); });
-    OE.bind("renew", function () { F.renew().then(function () { OE.go("form"); }, fail); });
+    OE.bind("pickOther", function () { F.pick(other).then(function () { SC.folder(); }, fail); });
+    OE.bind("renew", function () { F.renewAll().then(function () { if (F.state === "granted") OE.go("form"); else SC.folder(); }, fail); });
     OE.bind("cont", function () { OE.go("form"); });
   };
 
@@ -226,7 +230,7 @@
     var famOpts = '<option value="">' + x.choose + "</option>" + fams.map(function (k) { return '<option value="' + esc(k) + '">' + esc(k) + "</option>"; }).join("") + (esa() ? "" : '<option value="' + C.OTHER + '">' + x.other + "</option>");
     $("card").innerHTML = '<div class="fh"><h2 class="q">' + x.formH + '</h2><button type="button" class="stog" id="srchT" aria-controls="srch" aria-expanded="false" title="' + esc(x.srchH) + '" aria-label="' + esc(x.srchH) + '">🔍<span class="stl">' + esc(x.srchH) + "</span></button></div>" +
       '<p class="who" id="who">👤 ' + esc(x.whoTech) + ': <b id="whoName">' + esc(OE.S.tech.first + " " + OE.S.tech.last) + '</b> <button type="button" class="linkb" id="whoEdit">' + esc(x.whoChange) + '</button></p>' +
-      '<p class="hint" id="shareNow">' + esc(OE.fmt(x.shareNow, { s: OE.fs.shareName() })) + "</p>" +
+      '<p class="hint" id="shareNow">' + esc(OE.fmt(x.shareNow, { s: OE.fs.shareName(), p: OE.fs.paramDirName() })) + "</p>" +
       '<div class="dselbox" id="dselBox"></div><div class="srch" id="srch" hidden></div><div class="grid"><div class="col">' +
       '<label class="lbl" for="fam">' + (esa() ? x.system : x.family) + ' *</label><select id="fam">' + famOpts + '</select><input id="famO" class="oth" placeholder="' + esc(x.otherPh) + '" hidden>' +
       '<div id="subRow"' + (esa() ? " hidden" : "") + '><label class="lbl" for="sub">' + x.sub + ' *</label><select id="sub"></select><input id="subO" class="oth" placeholder="' + esc(x.otherPh) + '" hidden></div>' +
@@ -259,7 +263,7 @@
       $("prod").innerHTML = img ? '<img id="prodImg" src="img/models/' + esc(img) + '.jpg" alt="' + esc(info ? info.id : f.fam) + '"><figcaption>' + cap + (info && info.desc ? '<small class="desc" id="prodDesc">' + esc(descOf(info)) + "</small>" : "") + "</figcaption>"
         : '<div class="noimg">' + (f.fam ? x.noImg : "") + "</div>";
       var fn = famName(f), sn = subName(f);
-      $("pathP").innerHTML = fn && d ? "📁 " + esc(OE.fs.label() + "\\" + OE.safeName(fn, true) + "\\" + d) + (sn && f.file ? "<br>📄 " + esc(OE.fs.paramName(fn, sn, f.dossier, new Date(), f.file.name)) : "") : "";
+      $("pathP").innerHTML = fn && d ? "📁 " + esc(OE.fs.label()) + (sn && f.file ? "<br>📄 " + esc(OE.fs.paramName(fn, sn, f.dossier, new Date(), f.file.name)) : "") : "";
       $("fileT").innerHTML = f.file ? "📎 <b>" + esc(f.file.name) + "</b> (" + Math.max(1, Math.round(f.file.size / 1024)) + " kB)" : (OE.fs.state === "ios" ? x.iosPick : x.fileDrop);
     }
     var chk = 0;
@@ -319,7 +323,12 @@
       var rm = s.custom ? '<button type="button" class="small" data-rm="' + esc(s.key) + '">' + esc(x.srcRemove) + "</button>" : "";
       return "<li><span><b>" + esc(label) + "</b>" + (hint ? "<small>" + esc(hint) + "</small>" : "") + rm + "</span>" + btn + "</li>";
     }).join("");
-    box.innerHTML = '<div class="lbl" style="margin-top:0">' + esc(x.srcH) + '</div><ul class="list" id="srcList">' + rows + "</ul>" +
+    var prog = (F.programs || []).map(function (p) {
+      return "<li><span><b>" + esc(p.name) + "</b><small>" + esc(p.name + "\\" + p.folder) + "</small></span><span class=\"srca ok\">✓</span></li>";
+    }).join("");
+    box.innerHTML = (F._pending ? '<button type="button" class="btn sec" id="renewAll">' + esc(x.folderRenew) + "</button>" : "") +
+      '<div class="lbl" style="margin-top:0">' + esc(x.srcH) + '</div><ul class="list" id="srcList">' + rows + "</ul>" +
+      (prog ? '<div class="lbl">' + esc(x.srcFound) + '</div><ul class="list" id="progList">' + prog + "</ul>" : "") +
       '<button type="button" class="small" id="srcAdd">' + esc(x.srcAdd) + "</button>";
     [].forEach.call(box.querySelectorAll("[data-allow]"), function (b) {
       b.onclick = function () { F.allowSource(b.getAttribute("data-allow")).then(function () { drawSources(OE.t()); }, function (e) { if (e && e.name === "AbortError") return; OE.err(e && e.message === "denied" ? x.folderDenied : OE.fmt(x.latestErr, { e: (e && e.message) || e })); }); };
@@ -328,6 +337,7 @@
       b.onclick = function () { F.dropSource(b.getAttribute("data-rm")).then(function () { drawSources(OE.t()); }); };
     });
     OE.bind("srcAdd", function () { F.addSource().then(function () { drawSources(OE.t()); }, function (e) { if (e && e.name === "AbortError") return; }); });
+    OE.bind("renewAll", function () { F.renewAll().then(function () { drawSources(OE.t()); }, function (e) { if (e && e.name === "AbortError") return; }); });
   }
   function latestParam(x, use) {
     var F = OE.fs, box = $("latestBox");
@@ -394,12 +404,12 @@
         return (img ? OE.loadImage("img/models/" + img + ".jpg").catch(function () { return null; }) : Promise.resolve(null)).then(function (im) {
           var blob = OE.buildPdf({ family: fn, sub: sn, dossier: OE.safeName(f.dossier), serial: meta.serial, order: meta.order, tech: meta.technician, updated: now, files: files, img: im, example: example });
           mem.pdfBlob = blob;
-          return F.write(dir, r.pdfName, blob).then(function () { return F.write(dir, C.META, new Blob([JSON.stringify(meta, null, 2)], { type: "application/json" })); });
+          return F.write(dir, r.pdfName, blob).then(function () { return F.write(dir, F.metaName(fn, sn, f.dossier), new Blob([JSON.stringify(meta, null, 2)], { type: "application/json" })); });
         });
       })
       .then(function () { return F.storeParam(pname, f.file); })
       .then(function () { r.paramCopy = pname; })
-      .then(function () { OE.busy = false; r.folder = F.label() + "\\" + OE.safeName(fn, true) + "\\" + OE.safeName(f.dossier); mem.result = r; mem.sel = null; mem.dq = ""; OE.rescan(); OE.go("result"); })
+      .then(function () { OE.busy = false; r.folder = F.label(); mem.result = r; mem.sel = null; mem.dq = ""; OE.rescan(); OE.go("result"); })
       .catch(function (e) { OE.busy = false; b.disabled = false; b.textContent = x.save; OE.err(OE.fmt(x.saveErr, { e: e.message || e })); });
   }
   /* iPhone/iPad: no directory handle. Rename in memory, then share sheet or download into OneDrive. */
@@ -413,7 +423,7 @@
       var pdfName = OE.fs.pdfName(fn, sn, f.dossier);
       mem.shareFiles = [new File([f.file], pname, { type: f.file.type || "application/octet-stream" }), new File([blob], pdfName, { type: "application/pdf" })];
       OE.busy = false;
-      mem.result = { pname: pname, pdfName: pdfName, deleted: [], overwrote: false, files: files, ios: true, folder: OE.fs.shareName() + "\\projecten\\" + OE.safeName(fn, true) + "\\" + OE.safeName(f.dossier) };
+      mem.result = { pname: pname, pdfName: pdfName, deleted: [], overwrote: false, files: files, ios: true, folder: OE.fs.shareName() + "\\projecten\\" + OE.fs.paramDirName() };
       mem.sel = null; OE.go("result");
     }).catch(function (e) { OE.busy = false; b.disabled = false; b.textContent = x.save; OE.err(OE.fmt(x.saveErr, { e: e.message || e })); });
   }
@@ -427,7 +437,7 @@
       "<li><span><b>" + x.resFile + '</b><span id="rFile">' + esc(r.pname) + "</span>" + (r.overwrote ? '<em class="hint">' + x.resOver + "</em>" : "") + "</span></li>" +
       "<li><span><b>" + x.resPdf + '</b><span id="rPdf">' + esc(r.pdfName) + "</span></span></li>" +
       "<li><span><b>" + x.resMeta + "</b>" + esc(C.META) + "</span></li>" +
-      (r.paramCopy ? "<li><span><b>" + x.resParam + "</b><span id=\"rParam\">" + esc(r.paramCopy) + "</span></span></li>" : "") +
+      (r.paramCopy ? "<li><span><b>" + esc(OE.fmt(x.resParam, { p: OE.fs.paramDirName() })) + "</b><span id=\"rParam\">" + esc(r.paramCopy) + "</span></span></li>" : "") +
       (r.ios ? '<li><span><p class="ioshint" id="iosHint">' + esc(OE.fmt(x.iosHint, { s: OE.fs.shareName() })) + "</p></span></li>" : "") +
       (r.deleted.length ? '<li class="del"><span><b>' + x.resDel + '</b><span id="rDel">🗑 ' + r.deleted.map(esc).join("<br>🗑 ") + "</span></span></li>" : "") +
       "</ul><h3 class=\"sub\">" + x.resList + '</h3><div id="rList">' + groupedHtml(x, r.files, true) + "</div>" +

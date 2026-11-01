@@ -13,7 +13,7 @@ Live (GitHub Pages): https://sealink68.github.io/ESC_tool/
 
 ## Flow
 1. First start: language (NL/FR), then the technician's first and last name (localStorage; change via ⚙).
-2. Once: pick the folder for the selected line — `ESC_Share` or `ESA_Share` (its `projecten` subfolder is used/created) or `projecten` directly. The header switch **ESA / ESC** is remembered; each line keeps its own folder.
+2. Once: pick the root `ESC_Share` and/or `ESA_Share`. The header switch **ESA / ESC** chooses the target and is remembered; each share keeps its own handle. The app creates `projecten\ESC-param` or `projecten\ESA-param`. Every saved file sits flat in that folder (no per-dossier subfolders). After a browser restart, one **Toestaan / Autoriser** button re-grants every stored handle.
    The handle is kept in IndexedDB. After a browser restart, click **Toegang tot map hernieuwen / Renouveler l'accès au dossier**.
 3. Form: device family + sub-model (with *Ander… / Autre…* free text), Dossiernummer (ServiceMax), Serienummer,
    Ordernummer, the parameter file (click or drag & drop). Date/time are automatic.
@@ -27,7 +27,7 @@ Live (GitHub Pages): https://sealink68.github.io/ESC_tool/
 
 **ESA** lists only ES250 Proline Easy, ES250/130 Proline, ES250/180 Proline, ES250/FST Proline, ES400 Proline and ES500 Proline. **ESC** lists the existing security-entrance models.
 
-**Laatste parameterfile ophalen** scans the allowed source folders recursively (Pavis3, Pavis96NG, EEPS, Downloads, or an extra folder) for the newest `.xml` / `.prd` / `.dat` / `.kmc` / `.eep` / `.mot` (never `.mhx`), renames it `Familie_Submodel_Dossier_YYYY-MM-DD_HHMM.ext` and copies it into `projecten\ESC-param`. The original file is never deleted. On iPhone/iPad the same rename is offered via the share sheet or a download, because there is no folder access; the Chrome-only banner does not block iOS.
+**Laatste parameterfile ophalen** starts from one pick of `C:\Users\Public\Documents`. Every program folder that contains `projects` or `Projects` (Pavis3, Pavis96NG, and later ones) is scanned recursively. Downloads and `C:\EEPS Files` stay optional extras. The newest `.xml` / `.prd` / `.dat` / `.kmc` / `.eep` / `.mot` (never `.mhx`) is renamed `Familie_Submodel_Dossier_YYYY-MM-DD_HHMM.ext` and written flat into `projecten\ESC-param` or `projecten\ESA-param`. The original file is never deleted. On iPhone/iPad the same rename is offered via the share sheet or a download; the Chrome-only banner does not block iOS.
 
 Existing dossiers: the search is hidden by default; the 🔍 button **Bestaand dossier zoeken / Rechercher un dossier
 existant** next to the form title opens it (click again, ✕ or Esc closes it). Picking a dossier fills the form.
