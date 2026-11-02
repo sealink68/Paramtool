@@ -17,7 +17,7 @@
   OE.buildPdf = function (d) {
     var P = OE.PDFT, doc = new window.jspdf.jsPDF({ unit: "mm", format: "a4", orientation: "portrait", compress: true });
     function font(st, sz, col) { doc.setFont("helvetica", st); doc.setFontSize(sz); var c = col || C.tx; doc.setTextColor(c[0], c[1], c[2]); }
-    doc.setProperties({ title: clean(P.title + " – " + d.dossier), subject: clean(d.family + " " + d.sub), creator: "ESC_tool" });
+    doc.setProperties({ title: clean(P.title + " – " + d.dossier), subject: clean(d.family + " " + d.sub), creator: "Paramtool" });
     var y = 22;
     font("bold", 17); doc.text(clean(P.title), M, y);
     doc.setDrawColor(C.red[0], C.red[1], C.red[2]); doc.setLineWidth(0.8); doc.line(M, y + 3, W - M, y + 3);

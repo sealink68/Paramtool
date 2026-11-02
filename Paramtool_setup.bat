@@ -2,7 +2,7 @@
 chcp 65001 >nul
 setlocal EnableExtensions
 echo.
-echo ESC_tool setup / configuration
+echo Paramtool setup / configuration
 echo NL: Mappen klaarzetten en snelkoppeling maken. Geen installatie, geen beheerder.
 echo FR: Préparation des dossiers et du raccourci. Aucune installation, pas de droits administrateur.
 echo.
@@ -25,16 +25,16 @@ if not defined CHROME (
 )
 
 set "CHROME_PATH=%CHROME%"
-powershell -NoProfile -ExecutionPolicy Bypass -Command "$desk = [Environment]::GetFolderPath('Desktop'); $sc = (New-Object -ComObject WScript.Shell).CreateShortcut((Join-Path $desk 'ESC_tool.lnk')); $sc.TargetPath = $env:CHROME_PATH; $sc.Arguments = '--app=https://sealink68.github.io/ESC_tool/'; $sc.WorkingDirectory = $desk; $sc.Save()"
+powershell -NoProfile -ExecutionPolicy Bypass -Command "$desk = [Environment]::GetFolderPath('Desktop'); $sc = (New-Object -ComObject WScript.Shell).CreateShortcut((Join-Path $desk 'Paramtool.lnk')); $sc.TargetPath = $env:CHROME_PATH; $sc.Arguments = '--app=https://sealink68.github.io/Paramtool/'; $sc.WorkingDirectory = $desk; $sc.Description = 'Paramtool'; $sc.Save()"
 if errorlevel 1 (
   echo NL: Snelkoppeling maken is mislukt.
   echo FR: Échec de la création du raccourci.
   pause
   exit /b 1
 )
-echo NL: Snelkoppeling ESC_tool staat op het bureaublad. De app wordt geopend.
-echo FR: Le raccourci ESC_tool est sur le bureau. Ouverture de l'application.
-start "" "%CHROME%" --app=https://sealink68.github.io/ESC_tool/
+echo NL: Snelkoppeling Paramtool staat op het bureaublad. De app wordt geopend.
+echo FR: Le raccourci Paramtool est sur le bureau. Ouverture de l'application.
+start "" "%CHROME%" --app=https://sealink68.github.io/Paramtool/
 exit /b 0
 
 :tree

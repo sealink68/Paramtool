@@ -1,8 +1,8 @@
 {
   "id": "./",
-  "name": "ESC_tool",
-  "short_name": "ESC_tool",
-  "description": "ESC_tool – parameterbestanden en infofiche opslaan in ESC_Share / fichiers de paramètres et fiche d'info dans ESC_Share",
+  "name": "Paramtool",
+  "short_name": "Paramtool",
+  "description": "Paramtool – parameterbestanden en infofiche opslaan in ESC_Share / fichiers de paramètres et fiche d'info dans ESC_Share",
   "lang": "nl",
   "start_url": "./",
   "scope": "./",

@@ -3,10 +3,10 @@
 "use strict";
 var OE = window.OE = window.OE || {};
 OE.CFG = {
-  APP: "ESC_tool",
+  APP: "Paramtool",
   SUBDIR: "projecten",          // working folder inside the chosen share
   SHARES: { ESC: "ESC_Share", ESA: "ESA_Share" },
-  URL: "https://sealink68.github.io/ESC_tool/",
+  URL: "https://sealink68.github.io/Paramtool/",
   KEEP: 3,                      // parameter files kept per extension (case-insensitive) per dossier folder
   META: "_esc_info.json",
   PARAM_DIRS: { ESC: "ESC-param", ESA: "ESA-param" }, // flat folder inside projecten; no dossier subfolders
@@ -56,7 +56,7 @@ OE.catalog = function () {
 
 OE.T = {
   nl: {
-    title: "ESC_tool", langNl: "Nederlands", langFr: "Français",
+    title: "Paramtool", langNl: "Nederlands", langFr: "Français",
     other: "Ander…", otherPh: "Vrije tekst",
     techH: "Wie ben je?", techP: "Je naam komt in de PDF als technieker. Wordt enkel op deze laptop bewaard.",
     first: "Voornaam", last: "Achternaam", firstPh: "bv. Jan", lastPh: "bv. Peeters", needName: "Vul voor- en achternaam in.",
@@ -67,7 +67,7 @@ OE.T = {
     wizShare: "Kies de hoofdmap {s}.", wizShareOk: "{s} is gekozen. De map projecten\\{p} wordt aangemaakt.",
     wizDocs: "Bronmap op deze pc", wizDocsP: "Kies één keer C:\\Users\\Public\\Documents. Pavis en andere programmappen worden zelf gevonden. Optioneel: Downloads\\OSI-param (niet de map Downloads zelf) en C:\\EEPS Files.",
     folderBlocked: "Chrome weigert deze map omdat ze systeembestanden bevat. Kies een gewone submap, bijvoorbeeld Downloads\\OSI-param, niet de map Downloads zelf.",
-    wizBat: "Download ESC_tool_setup.bat", wizBatH: "Het script maakt de param-mappen in OneDrive en een bureaubladsnelkoppeling. Geen installatie en geen beheerder.",
+    wizBat: "Download Paramtool_setup.bat", wizBatH: "Het script maakt de param-mappen in OneDrive en een bureaubladsnelkoppeling. Geen installatie en geen beheerder.",
     wizRedo: "Setup opnieuw", wizStep: "Stap {n} van {t}",
     lineLabel: "Reeks", lineEsc: "ESC", lineEsa: "ESA",
     folderH: "Map kiezen", folderP: "Kies één keer de hoofdmap ‘{s}’. De app maakt zelf projecten en {p} aan. ESC en ESA mag je allebei kiezen; ze blijven bewaard.",
@@ -86,11 +86,11 @@ OE.T = {
     folderDenied: "Geen toegang tot de map gekregen. Probeer opnieuw.",
     folderErr: "De map kon niet geopend worden: {e}",
     unsupH: "Browser niet ondersteund",
-    unsupP: "Deze app heeft toegang nodig tot een map op je laptop (File System Access API). Deze browser kan dat niet. Open https://sealink68.github.io/ESC_tool/ in Google Chrome.",
-    brwH: "Open ESC_tool in Google Chrome",
+    unsupP: "Deze app heeft toegang nodig tot een map op je laptop (File System Access API). Deze browser kan dat niet. Open https://sealink68.github.io/Paramtool/ in Google Chrome.",
+    brwH: "Open Paramtool in Google Chrome",
     brwEdge: "Je gebruikt Microsoft Edge. Op bedrijfslaptops wist Edge bij het afsluiten alle instellingen van de app (taal, naam en gekozen map). In Chrome blijven ze bewaard.",
     brwNoFs: "Deze browser (bv. Firefox) kan geen bestanden in een map op je laptop opslaan. Opslaan is hier niet mogelijk; gebruik Google Chrome.",
-    brwSteps: "1. Klik op ‘Link kopiëren’.\n2. Open Google Chrome en plak de link in de adresbalk (Ctrl+V, Enter).\n3. Klik in de adresbalk op het installatie-icoon om ESC_tool als app te installeren en gebruik daarna het icoon op het bureaublad of in het startmenu.",
+    brwSteps: "1. Klik op ‘Link kopiëren’.\n2. Open Google Chrome en plak de link in de adresbalk (Ctrl+V, Enter).\n3. Klik in de adresbalk op het installatie-icoon om Paramtool als app te installeren en gebruik daarna het icoon op het bureaublad of in het startmenu.",
     brwCopy: "📋 Link kopiëren", brwCopied: "✓ Link gekopieerd", brwCopyFail: "Kopiëren lukte niet – selecteer de link en kopieer manueel.", brwGo: "Toch doorgaan",
     formH: "Toestelgegevens", whoTech: "Technieker", whoChange: "Wijzigen", family: "Toestelfamilie", sub: "Submodel", system: "Systeem", choose: "— kies —",
     dossier: "Dossiernummer (ServiceMax)", dossierPh: "bv. 00123456", serial: "Serienummer", order: "Ordernummer",
@@ -107,7 +107,7 @@ OE.T = {
     latestUse: "Dit bestand gebruiken", latestOther: "Ander bestand kiezen…", latestErr: "De bronmap kon niet gelezen worden: {e}",
     latestNoDir: "Kies eerst de map {s}.",
     srcH: "Bronmappen", srcAllow: "Toestaan", srcOk: "toegestaan", srcAdd: "+ Map toevoegen", srcRemove: "Verwijderen",
-    srcDown: "Downloads\\OSI-param", srcDownHint: "Kies de submap Downloads\\OSI-param (start in Downloads). Niet de map Downloads zelf: Chrome weigert die. ESC_tool_setup.bat maakt de submap. Voor bestanden van http://192.168.10.4.",
+    srcDown: "Downloads\\OSI-param", srcDownHint: "Kies de submap Downloads\\OSI-param (start in Downloads). Niet de map Downloads zelf: Chrome weigert die. Paramtool_setup.bat maakt de submap. Voor bestanden van http://192.168.10.4.",
     srcAddPh: "bv. Flap Control Center",
     iosPick: "Bestand kiezen",
     iosHint: "Kies het bestand in Bestanden → Downloads. Ruim Downloads daarna zelf op. Zet het daarna in OneDrive ‘{s}’ (map projecten). De adapter-wifi (http://192.168.10.4) heeft geen internet: het uploadt pas als je weer online bent.",
@@ -136,7 +136,7 @@ OE.T = {
     edit: "Wijzigen", close: "Sluiten", yes: "Ja", no: "Nee", ok: "OK", cancel: "Annuleren", none: "—"
   },
   fr: {
-    title: "ESC_tool", langNl: "Nederlands", langFr: "Français",
+    title: "Paramtool", langNl: "Nederlands", langFr: "Français",
     other: "Autre…", otherPh: "Texte libre",
     techH: "Qui êtes-vous ?", techP: "Votre nom figure dans le PDF comme technicien. Il est conservé uniquement sur cet ordinateur.",
     first: "Prénom", last: "Nom", firstPh: "p. ex. Jean", lastPh: "p. ex. Dupont", needName: "Indiquez le prénom et le nom.",
@@ -146,7 +146,7 @@ OE.T = {
     wizShare: "Choisissez le dossier racine {s}.", wizShareOk: "{s} est choisi. Le dossier projecten\\{p} est créé.",
     wizDocs: "Dossier source sur ce PC", wizDocsP: "Choisissez une fois C:\\Users\\Public\\Documents. Pavis et les autres programmes sont trouvés automatiquement. Facultatif : Téléchargements\\OSI-param (pas le dossier Téléchargements lui-même) et C:\\EEPS Files.",
     folderBlocked: "Chrome refuse ce dossier parce qu'il contient des fichiers système. Choisissez un sous-dossier ordinaire, par exemple Téléchargements\\OSI-param, pas le dossier Téléchargements lui-même.",
-    wizBat: "Télécharger ESC_tool_setup.bat", wizBatH: "Le script crée les dossiers param dans OneDrive et un raccourci sur le bureau. Aucune installation, pas de droits administrateur.",
+    wizBat: "Télécharger Paramtool_setup.bat", wizBatH: "Le script crée les dossiers param dans OneDrive et un raccourci sur le bureau. Aucune installation, pas de droits administrateur.",
     wizRedo: "Reconfigurer", wizStep: "Étape {n} sur {t}",
     lineLabel: "Gamme", lineEsc: "ESC", lineEsa: "ESA",
     folderH: "Choisir le dossier", folderP: "Choisissez une seule fois le dossier racine « {s} ». L'app crée elle-même projecten et {p}. Vous pouvez choisir ESC et ESA ; les deux sont mémorisés.",
@@ -165,11 +165,11 @@ OE.T = {
     folderDenied: "L'accès au dossier n'a pas été accordé. Réessayez.",
     folderErr: "Impossible d'ouvrir le dossier : {e}",
     unsupH: "Navigateur non pris en charge",
-    unsupP: "Cette application doit accéder à un dossier de votre ordinateur (File System Access API). Ce navigateur ne le permet pas. Ouvrez https://sealink68.github.io/ESC_tool/ dans Google Chrome.",
-    brwH: "Ouvrez ESC_tool dans Google Chrome",
+    unsupP: "Cette application doit accéder à un dossier de votre ordinateur (File System Access API). Ce navigateur ne le permet pas. Ouvrez https://sealink68.github.io/Paramtool/ dans Google Chrome.",
+    brwH: "Ouvrez Paramtool dans Google Chrome",
     brwEdge: "Vous utilisez Microsoft Edge. Sur les ordinateurs de l'entreprise, Edge efface à la fermeture tous les réglages de l'app (langue, nom et dossier choisi). Dans Chrome, ils sont conservés.",
     brwNoFs: "Ce navigateur (p. ex. Firefox) ne peut pas enregistrer de fichiers dans un dossier de votre ordinateur. L'enregistrement est impossible ici ; utilisez Google Chrome.",
-    brwSteps: "1. Cliquez sur « Copier le lien ».\n2. Ouvrez Google Chrome et collez le lien dans la barre d'adresse (Ctrl+V, Entrée).\n3. Cliquez sur l'icône d'installation dans la barre d'adresse pour installer ESC_tool comme app, puis utilisez l'icône sur le bureau ou dans le menu Démarrer.",
+    brwSteps: "1. Cliquez sur « Copier le lien ».\n2. Ouvrez Google Chrome et collez le lien dans la barre d'adresse (Ctrl+V, Entrée).\n3. Cliquez sur l'icône d'installation dans la barre d'adresse pour installer Paramtool comme app, puis utilisez l'icône sur le bureau ou dans le menu Démarrer.",
     brwCopy: "📋 Copier le lien", brwCopied: "✓ Lien copié", brwCopyFail: "La copie a échoué – sélectionnez le lien et copiez-le manuellement.", brwGo: "Continuer quand même",
     formH: "Données de l'appareil", whoTech: "Technicien", whoChange: "Modifier", family: "Famille d'appareil", sub: "Sous-modèle", system: "Système", choose: "— choisir —",
     dossier: "Numéro de dossier (ServiceMax)", dossierPh: "p. ex. 00123456", serial: "Numéro de série", order: "Numéro de commande",
@@ -186,7 +186,7 @@ OE.T = {
     latestUse: "Utiliser ce fichier", latestOther: "Choisir un autre fichier…", latestErr: "Impossible de lire le dossier source : {e}",
     latestNoDir: "Choisissez d'abord le dossier {s}.",
     srcH: "Dossiers source", srcAllow: "Autoriser", srcOk: "autorisé", srcAdd: "+ Ajouter un dossier", srcRemove: "Retirer",
-    srcDown: "Téléchargements\\OSI-param", srcDownHint: "Choisissez le sous-dossier Téléchargements\\OSI-param (le sélecteur s'ouvre dans Téléchargements). Pas le dossier Téléchargements lui-même : Chrome le refuse. ESC_tool_setup.bat crée le sous-dossier. Pour les fichiers de http://192.168.10.4.",
+    srcDown: "Téléchargements\\OSI-param", srcDownHint: "Choisissez le sous-dossier Téléchargements\\OSI-param (le sélecteur s'ouvre dans Téléchargements). Pas le dossier Téléchargements lui-même : Chrome le refuse. Paramtool_setup.bat crée le sous-dossier. Pour les fichiers de http://192.168.10.4.",
     srcAddPh: "p. ex. Flap Control Center",
     iosPick: "Choisir un fichier",
     iosHint: "Choisissez le fichier dans Fichiers → Téléchargements. Videz ensuite Téléchargements vous-même. Placez-le dans OneDrive « {s} » (dossier projecten). Le Wi-Fi de l'adaptateur (http://192.168.10.4) n'a pas Internet : l'envoi se fait quand vous êtes de nouveau en ligne.",
@@ -218,7 +218,7 @@ OE.T = {
 
 /* Bilingual PDF labels (always NL / FR). */
 OE.PDFT = {
-  title: "ESC_tool – Toestelgegevens / Données de l'appareil",
+  title: "Paramtool – Toestelgegevens / Données de l'appareil",
   family: "Toestelfamilie / Famille d'appareil",
   sub: "Toestelmodel / Modèle",
   dossier: "Dossiernummer / Numéro de dossier",
@@ -232,7 +232,7 @@ OE.PDFT = {
   active: "ACTIEF bij laatste bezoek / ACTIF lors de la dernière visite",
   date: "Datum / Date",
   example: "Voorbeeldafbeelding familie / Image d'exemple de la famille",
-  footer: "Gegenereerd met ESC_tool / Généré avec ESC_tool"
+  footer: "Gegenereerd met Paramtool / Généré avec Paramtool"
 };
 
 /* Per-screen help ("?" button). "• " lines become a bullet list, "1. " lines a numbered list, "## " lines a sub-heading. */
@@ -244,7 +244,7 @@ OE.HELP = {
       "• ESC-technieker: kies ESC_Share (ESA_Share mag erbij) en C:\\Users\\Public\\Documents. Downloads\\OSI-param en C:\\EEPS Files zijn optioneel. Kies niet de map Downloads zelf.",
       "• ESA-technieker: kies ESA_Share. Geen bronmap op de pc.",
       "• iPhone/iPad: alleen naam, rol en taal.",
-      "• ‘Setup opnieuw’ in Instellingen of in deze help start de wizard opnieuw. ESC_tool_setup.bat maakt de OneDrive-mappen en een snelkoppeling, zonder installatie."],
+      "• ‘Setup opnieuw’ in Instellingen of in deze help start de wizard opnieuw. Paramtool_setup.bat maakt de OneDrive-mappen en een snelkoppeling, zonder installatie."],
     tech: ["Vul je voor- en achternaam in.", "• Je naam verschijnt als technieker in de PDF.", "• Wordt enkel in deze browser bewaard; wijzigen kan via ⚙ Instellingen."],
     folder: ["De app schrijft rechtstreeks in de OneDrive-map op je laptop. ESC gebruikt ‘ESC_Share’, ESA gebruikt ‘ESA_Share’ (underscore).",
       "• Schakel bovenaan tussen ESA en ESC. Elke reeks onthoudt zijn eigen hoofdmap (ESC_Share en/of ESA_Share). Ontbreekt de gekozen share, dan vraagt de app om die één keer te kiezen.",
@@ -281,7 +281,7 @@ OE.HELP = {
       "• Technicien ESC : choisissez ESC_Share (ESA_Share en plus si besoin) et C:\\Users\\Public\\Documents. Téléchargements\\OSI-param et C:\\EEPS Files sont facultatifs. Ne choisissez pas le dossier Téléchargements lui-même.",
       "• Technicien ESA : choisissez ESA_Share. Pas de dossier source sur le PC.",
       "• iPhone/iPad : seulement le nom, le rôle et la langue.",
-      "• « Reconfigurer » dans Paramètres ou dans cette aide relance l'assistant. ESC_tool_setup.bat crée les dossiers OneDrive et un raccourci, sans installation."],
+      "• « Reconfigurer » dans Paramètres ou dans cette aide relance l'assistant. Paramtool_setup.bat crée les dossiers OneDrive et un raccourci, sans installation."],
     tech: ["Indiquez votre prénom et votre nom.", "• Votre nom figure comme technicien dans le PDF.", "• Conservé uniquement dans ce navigateur ; modifiable via ⚙ Paramètres."],
     folder: ["L'application écrit directement dans le dossier OneDrive de votre ordinateur. ESC utilise « ESC_Share », ESA utilise « ESA_Share » (tiret bas).",
       "• Basculez en haut entre ESA et ESC. Chaque gamme mémorise son dossier racine (ESC_Share et/ou ESA_Share). Si le partage choisi manque, l'app demande de le choisir une fois.",
@@ -324,15 +324,15 @@ OE.HELP_EXTRA = {
     "5. Het OneDrive-wolkje in de taakbalk (rechtsonder) moet ‘Up-to-date’ tonen: geen rood kruisje, niet gepauzeerd.",
     "6. Test: sla een testdossier op (bv. TEST_jouwnaam) en vraag ESC_Field Support om te controleren of het zichtbaar is. Verwijder het daarna.",
     "## Firefox en de adapterpagina",
-    "1. Chrome weigert de map Downloads zelf, omdat die systeembestanden bevat. Kies de submap Downloads\\OSI-param. ESC_tool_setup.bat maakt die map in %USERPROFILE%\\Downloads.",
+    "1. Chrome weigert de map Downloads zelf, omdat die systeembestanden bevat. Kies de submap Downloads\\OSI-param. Paramtool_setup.bat maakt die map in %USERPROFILE%\\Downloads.",
     "2. Firefox: Instellingen → Algemeen → Bestanden en toepassingen.",
     "3. Vink ‘Altijd vragen waar bestanden moeten worden opgeslagen’ aan. Bij een download van http://192.168.10.4 kies je Downloads\\OSI-param.",
     "4. Of zet ‘Bestanden opslaan in’ op Downloads\\OSI-param.",
     "## Installeren als Chrome-app",
-    "1. Open de link https://sealink68.github.io/ESC_tool/ in Google Chrome (niet in Edge: Edge wist op bedrijfslaptops de instellingen bij afsluiten).",
+    "1. Open de link https://sealink68.github.io/Paramtool/ in Google Chrome (niet in Edge: Edge wist op bedrijfslaptops de instellingen bij afsluiten).",
     "2. Klik op het installatie-icoon rechts in de adresbalk en kies ‘Installeren’. Een snelkoppeling op het bureaublad wordt aangeboden.",
-    "3. Gebruik voortaan het ESC_tool-icoon op het bureaublad of in het startmenu. Klik rechts op het app-icoon in de taakbalk en kies ‘Aan taakbalk vastmaken’.",
-    "• Optioneel, Windows-snelkoppeling: rechtsklik op het bureaublad > Nieuw > Snelkoppeling, met als doel: \"C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe\" https://sealink68.github.io/ESC_tool/",
+    "3. Gebruik voortaan het Paramtool-icoon op het bureaublad of in het startmenu. Klik rechts op het app-icoon in de taakbalk en kies ‘Aan taakbalk vastmaken’.",
+    "• Optioneel, Windows-snelkoppeling: rechtsklik op het bureaublad > Nieuw > Snelkoppeling, met als doel: \"C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe\" https://sealink68.github.io/Paramtool/",
     "## Offline werken",
     "1. Open de app één keer met internet (of installeer ze als app). Daarna staat alles op je laptop, ook alle productfoto’s.",
     "2. Zonder internet werkt de app gewoon (bovenaan staat dan ‘Offline’): opslaan gebeurt in de OneDrive-map op je laptop, inclusief de PDF met productfoto.",
@@ -349,15 +349,15 @@ OE.HELP_EXTRA = {
     "5. Le nuage OneDrive dans la barre des tâches (en bas à droite) doit indiquer « À jour » (Up-to-date) : pas de croix rouge, pas en pause.",
     "6. Test : enregistrez un dossier de test (p. ex. TEST_votrenom) et demandez à ESC_Field Support de vérifier s'il est visible. Supprimez-le ensuite.",
     "## Firefox et la page adaptateur",
-    "1. Chrome refuse le dossier Téléchargements lui-même, parce qu'il contient des fichiers système. Choisissez le sous-dossier Téléchargements\\OSI-param. ESC_tool_setup.bat crée ce dossier dans %USERPROFILE%\\Downloads.",
+    "1. Chrome refuse le dossier Téléchargements lui-même, parce qu'il contient des fichiers système. Choisissez le sous-dossier Téléchargements\\OSI-param. Paramtool_setup.bat crée ce dossier dans %USERPROFILE%\\Downloads.",
     "2. Firefox : Paramètres → Général → Fichiers et applications.",
     "3. Cochez « Toujours demander où enregistrer les fichiers ». Pour un téléchargement depuis http://192.168.10.4, choisissez Téléchargements\\OSI-param.",
     "4. Ou réglez « Enregistrer les fichiers dans » sur Téléchargements\\OSI-param.",
     "## Installer comme app Chrome",
-    "1. Ouvrez le lien https://sealink68.github.io/ESC_tool/ dans Google Chrome (pas dans Edge : sur les ordinateurs de l'entreprise, Edge efface les réglages à la fermeture).",
+    "1. Ouvrez le lien https://sealink68.github.io/Paramtool/ dans Google Chrome (pas dans Edge : sur les ordinateurs de l'entreprise, Edge efface les réglages à la fermeture).",
     "2. Cliquez sur l'icône d'installation à droite dans la barre d'adresse, puis « Installer ». Un raccourci sur le bureau est proposé.",
-    "3. Utilisez ensuite l'icône ESC_tool sur le bureau ou dans le menu Démarrer. Clic droit sur l'icône de l'app dans la barre des tâches, puis « Épingler à la barre des tâches ».",
-    "• Facultatif, raccourci Windows : clic droit sur le bureau > Nouveau > Raccourci, avec comme cible : \"C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe\" https://sealink68.github.io/ESC_tool/",
+    "3. Utilisez ensuite l'icône Paramtool sur le bureau ou dans le menu Démarrer. Clic droit sur l'icône de l'app dans la barre des tâches, puis « Épingler à la barre des tâches ».",
+    "• Facultatif, raccourci Windows : clic droit sur le bureau > Nouveau > Raccourci, avec comme cible : \"C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe\" https://sealink68.github.io/Paramtool/",
     "## Travailler hors ligne",
     "1. Ouvrez l'app une fois avec Internet (ou installez-la). Ensuite tout est sur votre ordinateur, y compris toutes les photos de produits.",
     "2. Sans Internet, l'app fonctionne normalement (« Hors ligne » s'affiche en haut) : l'enregistrement se fait dans le dossier OneDrive de l'ordinateur, PDF avec photo du produit compris.",

@@ -1,4 +1,4 @@
 # Auto detect text files and perform LF normalization
 * text=auto
 # Windows must receive CRLF; GitHub Pages serves the blob as stored.
-ESC_tool_setup.bat -text
+Paramtool_setup.bat -text

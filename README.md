@@ -1,10 +1,10 @@
-# ESC_tool
+# Paramtool
 
 Static web app for dormakaba technicians (security entrances / access control: sensor barriers, turnstiles,
 revolving doors, interlocks). It saves a device's parameter file plus a bilingual (NL/FR) info PDF straight into
 the OneDrive-synced folder `ESC_Share\projecten` on the Windows laptop.
 
-Live (GitHub Pages): https://sealink68.github.io/ESC_tool/
+Live (GitHub Pages): https://sealink68.github.io/Paramtool/
 
 ## Requirements
 - **Microsoft Edge or Google Chrome** (desktop). The app uses the File System Access API (`showDirectoryPicker`);
@@ -27,7 +27,7 @@ Live (GitHub Pages): https://sealink68.github.io/ESC_tool/
 
 **ESA** lists only ES250 Proline Easy, ES250/130 Proline, ES250/180 Proline, ES250/FST Proline, ES400 Proline and ES500 Proline. **ESC** lists the existing security-entrance models.
 
-**Laatste parameterfile ophalen** starts from one pick of `C:\Users\Public\Documents`. Every program folder that contains `projects` or `Projects` (Pavis3, Pavis96NG, and later ones) is scanned recursively. `Downloads\OSI-param` (not the Downloads folder itself; Chrome blocks that) and `C:\EEPS Files` stay optional extras. `ESC_tool_setup.bat` creates `Downloads\OSI-param`. The newest `.xml` / `.prd` / `.dat` / `.kmc` / `.eep` / `.mot` (never `.mhx`) is renamed `Familie_Submodel_Dossier_YYYY-MM-DD_HHMM.ext` and written flat into `projecten\ESC-param` or `projecten\ESA-param`. The original file is never deleted. On iPhone/iPad the same rename is offered via the share sheet or a download; the Chrome-only banner does not block iOS.
+**Laatste parameterfile ophalen** starts from one pick of `C:\Users\Public\Documents`. Every program folder that contains `projects` or `Projects` (Pavis3, Pavis96NG, and later ones) is scanned recursively. `Downloads\OSI-param` (not the Downloads folder itself; Chrome blocks that) and `C:\EEPS Files` stay optional extras. `Paramtool_setup.bat` creates `Downloads\OSI-param`. The newest `.xml` / `.prd` / `.dat` / `.kmc` / `.eep` / `.mot` (never `.mhx`) is renamed `Familie_Submodel_Dossier_YYYY-MM-DD_HHMM.ext` and written flat into `projecten\ESC-param` or `projecten\ESA-param`. The original file is never deleted. On iPhone/iPad the same rename is offered via the share sheet or a download; the Chrome-only banner does not block iOS.
 
 Existing dossiers: the search is hidden by default; the 🔍 button **Bestaand dossier zoeken / Rechercher un dossier
 existant** next to the form title opens it (click again, ✕ or Esc closes it). Picking a dossier fills the form.
@@ -37,8 +37,7 @@ and how to install the app (**App installeren / Installer l'app**).
 
 ## Desktop app (PWA) and offline use
 `manifest.webmanifest` + `sw.js` make the site installable in Edge/Chrome (address-bar install icon, or Edge ⋯ > Apps >
-*Deze site als app installeren*). The icon is the old grey Kaba wordmark (`icons/`, from Wikimedia Commons
-*Kaba Group logo.svg*, recoloured grey).
+*Deze site als app installeren*). The icon is the red dormakaba symbol on white (`icons/`), taken from `img/logo-mark.svg`. The header keeps the full dormakaba wordmark (`img/logo-full.svg`).
 
 **Offline:** after one online visit the app works fully offline, including the info PDF with the right product image
 for every sub-model. The service worker precaches the complete app on install (HTML, CSS, JS, jsPDF, manifest,
@@ -78,7 +77,7 @@ js/offline.js      offline badge, update banner, offline-ready toast
 js/app.js          bootstrap + service worker registration
 manifest.webmanifest, sw.js   PWA (install as desktop app, offline precache)
 tools/gen_precache.py        writes the precache list into sw.js
-icons/             PWA icons (192, 512, maskable 192/512, apple-touch-icon 180, kaba-logo.svg)
+icons/             PWA icons (192, 512, maskable 192/512, apple-touch-icon 180)
 js/vendor/jspdf.umd.min.js  (vendored, MIT – see jspdf.LICENSE)
 img/models/*.jpg   product images (dormakaba "Product Overview Security Gates" 02/2025 and dormakaba brochures)
 img/logo-full.svg, img/logo-mark.svg

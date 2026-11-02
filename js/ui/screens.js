@@ -82,7 +82,7 @@
   }
   function setupBanner() {
     if (OE.ios && OE.ios()) return "";
-    return '<div class="batban" id="setupBanner"><a class="btn pri big" id="setupBat" href="ESC_tool_setup.bat" download>Stap 1: Download en start ESC_tool_setup.bat<small>Étape 1 : Télécharger et lancer ESC_tool_setup.bat</small></a>' +
+    return '<div class="batban" id="setupBanner"><a class="btn pri big" id="setupBat" href="Paramtool_setup.bat" download>Stap 1: Download en start Paramtool_setup.bat<small>Étape 1 : Télécharger et lancer Paramtool_setup.bat</small></a>' +
       '<p class="hint">NL: Maakt de mappen en een bureaubladsnelkoppeling. Chrome: ‘Behouden’. SmartScreen: ‘Meer info’ &gt; ‘Toch uitvoeren’.<br>FR: Crée les dossiers et un raccourci sur le bureau. Chrome : « Conserver ». SmartScreen : « Informations complémentaires » &gt; « Exécuter quand même ».</p></div>';
   }
   OE.setupBanner = setupBanner;
