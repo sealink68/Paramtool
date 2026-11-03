@@ -469,6 +469,7 @@
     tick(); clearInterval(mem.tick); mem.tick = setInterval(tick, 15000);
     $("srchT").onclick = function () { setSearch(!mem.srchOpen); };
     upd(); numTip(); drawSearch(); scan(); if (f.dossier && f.fam && !mem.sel) checkExisting();
+    if (OE.smxMount) OE.smxMount();
     OE.bind("save", function () { save(x, f); });
     if (mem.autorunLatest) { mem.autorunLatest = false; latestParam(x, function (file) { f.file = file; upd(); }); }
   };
@@ -593,8 +594,9 @@
         var meta = { app: C.APP, family: fn, submodel: sn, dossier: OE.safeName(f.dossier), dossierInput: f.dossier,
           technician: S.tech.first + " " + S.tech.last, updated: now.toISOString(), updatedHuman: OE.human(now), pdf: r.pdfName, files: files };
         if (!esa()) { meta.serial = f.serial.trim(); meta.order = f.order.trim(); }
+        if (mem.smxClient) meta.servicemax = { wo: mem.smxClient.wo, account: mem.smxClient.account, adres: mem.smxClient.adres, contact: mem.smxClient.contact, product: mem.smxClient.product };
         return (img ? OE.loadImage(modelSrc(img)).catch(function () { return null; }) : Promise.resolve(null)).then(function (im) {
-          var blob = OE.buildPdf({ family: fn, sub: sn, dossier: OE.safeName(f.dossier), serial: meta.serial || "", order: meta.order || "", noNumbers: esa(), tech: meta.technician, updated: now, files: files, img: im, example: example });
+          var blob = OE.buildPdf({ family: fn, sub: sn, dossier: OE.safeName(f.dossier), serial: meta.serial || "", order: meta.order || "", noNumbers: esa(), tech: meta.technician, updated: now, files: files, img: im, example: example, smx: meta.servicemax });
           mem.pdfBlob = blob;
           return F.write(dir, r.pdfName, blob).then(function () { return F.write(dir, F.metaName(fn, sn, f.dossier), new Blob([JSON.stringify(meta, null, 2)], { type: "application/json" })); });
         });
@@ -610,7 +612,7 @@
     b.disabled = true; b.textContent = x.saving; OE.busy = true;
     var files = [{ name: pname, stamp: OE.stamp(now), ext: OE.fs.extKey(pname) }];
     (img ? OE.loadImage(modelSrc(img)).catch(function () { return null; }) : Promise.resolve(null)).then(function (im) {
-      var blob = OE.buildPdf({ family: fn, sub: sn, dossier: OE.safeName(f.dossier), serial: esa() ? "" : f.serial.trim(), order: esa() ? "" : f.order.trim(), noNumbers: esa(), tech: S.tech.first + " " + S.tech.last, updated: now, files: files, img: im, example: example });
+      var blob = OE.buildPdf({ family: fn, sub: sn, dossier: OE.safeName(f.dossier), serial: esa() ? "" : f.serial.trim(), order: esa() ? "" : f.order.trim(), noNumbers: esa(), tech: S.tech.first + " " + S.tech.last, updated: now, files: files, img: im, example: example, smx: mem.smxClient });
       mem.pdfBlob = blob;
       var pdfName = OE.fs.pdfName(fn, sn, f.dossier);
       mem.shareFiles = [new File([f.file], pname, { type: f.file.type || "application/octet-stream" }), new File([blob], pdfName, { type: "application/pdf" })];

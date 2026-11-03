@@ -251,4 +251,13 @@ h3.sub{font-size:15px;margin:16px 0 4px}
 .src .srca{flex:none;border:0;border-radius:10px;background:#e2e8f0;color:var(--tx);font-weight:800;font-size:13px;padding:8px 12px;min-height:40px;cursor:pointer}
 .src .srca.ok{background:#d1fae5;color:#065f46;box-shadow:none}
 .ioshint{background:#eff6ff;border:1px solid #bfdbfe;color:#1e3a8a;border-radius:12px;padding:12px;margin-top:8px;font-size:13px;font-weight:600;line-height:1.4}
+.ver{margin:16px 0 0;text-align:center;color:rgba(255,255,255,.9);font-size:12px;font-weight:800;letter-spacing:.02em}
+.smx{margin:8px 0 4px}
+.scan{width:100%;background:#fff;color:var(--a);border:2px solid #c7d2fe;box-shadow:none}
+.scan small{display:block;color:var(--mu);font-weight:650;margin-top:2px}
+.ocrbar{height:8px;background:#e2e8f0;border-radius:8px;overflow:hidden;margin:12px 0}
+.ocrbar i{display:block;height:100%;width:0;background:linear-gradient(90deg,var(--a),var(--b));transition:width .2s linear}
+.smxfields label{display:block;margin-top:12px}
+.smxfields label small{display:block;font-weight:650;color:var(--mu)}
+.smxfields textarea{min-height:52px}
 .brw{background:#fff7ed;border:2px solid #fb923c;border-radius:16px;padding:14px 18px;margin:0 auto 14px;max-width:900px;color:#7c2d12;font-size:14px}.brw h3{margin:0 0 6px;font-size:17px}.brw ol{margin:6px 0 6px 20px;padding:0}.brw code{user-select:all;background:#fff;padding:2px 6px;border-radius:6px}.brwB{display:flex;gap:10px;flex-wrap:wrap}

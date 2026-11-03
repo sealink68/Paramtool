@@ -6,11 +6,13 @@
   var RESERVED = /^(CON|PRN|AUX|NUL|COM[1-9]|LPT[1-9])(\..*)?$/i;
   /* Windows-safe file/folder name: every character allowed except control chars; whitespace and
      \ / : * ? " < > | become "_"; trailing dots/spaces trimmed. collapse: merge runs of "_" (used for model names). */
+  /* Filename only. The form keeps the typed text. Control characters, | / \ : * ? " < > and
+     whitespace become "_"; repeated "_" collapse; no leading or trailing dots, spaces or underscores. */
   OE.safeName = function (s, collapse) {
-    var v = String(s == null ? "" : s).replace(/[\u0000-\u001F\u007F]/g, "")
-      .replace(/^[\s\u00A0\u202F\uFEFF]+|[\s\u00A0\u202F\uFEFF.]+$/g, "")
-      .replace(/[\s\u00A0\u202F\uFEFF]/g, "_").replace(/[\\/:*?"<>|]/g, "_").replace(/[. ]+$/, "");
-    if (collapse) v = v.replace(/_+/g, "_").replace(/^_+|_+$/g, "");
+    var v = String(s == null ? "" : s).replace(/[\u0000-\u001F\u007F]/g, "_")
+      .replace(/[\s\u00A0\u202F\uFEFF]/g, "_").replace(/[\\/:*?"<>|]/g, "_")
+      .replace(/_+/g, "_").replace(/^[\s._]+|[\s._]+$/g, "");
+    if (collapse) v = v.replace(/^_+|_+$/g, "");
     if (RESERVED.test(v)) v = "_" + v;
     return v;
   };

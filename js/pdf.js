@@ -35,6 +35,11 @@
       ls.forEach(function (l) { doc.text(l, M, y); y += 5.6; }); y += 3.2;
     }
     field(P.family, d.family); field(P.sub, d.sub); field(P.dossier, d.dossier);
+    if (d.smx) {
+      [["Werkordernummer / N° d'ordre", d.smx.wo], ["Account / Compte", d.smx.account], ["Adres / Adresse", d.smx.adres], ["Contact", d.smx.contact], ["Geïnstalleerd product / Produit installé", d.smx.product]].forEach(function (row) {
+        if (row[1]) field(row[0], row[1]);
+      });
+    }
     if (!d.noNumbers) { field(P.serial, d.serial); field(P.order, d.order); }
     field(P.tech, d.tech); field(P.updated, OE.human(d.updated));
     y = Math.max(y, imgTop + 95) + 4;

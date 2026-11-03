@@ -45,7 +45,16 @@
   if (navigator.serviceWorker) {
     navigator.serviceWorker.addEventListener("controllerchange", function () {
       if (U.asked) { U.asked = false; location.reload(); return; }
-      if (U.hadCtl) OE.showUpdate(); // activated from another tab: offer the reload, never force it
+      if (U.hadCtl) {
+        try {
+          if (sessionStorage.getItem("pt_reloaded") !== "1" && !OE.formDirty()) {
+            sessionStorage.setItem("pt_reloaded", "1");
+            location.reload();
+            return;
+          }
+        } catch (e) {}
+        OE.showUpdate();
+      }
       U.hadCtl = true;
     });
     navigator.serviceWorker.addEventListener("message", function (e) {

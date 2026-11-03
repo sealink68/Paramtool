@@ -45,9 +45,10 @@
   };
   /* iPhone/iPad (incl. iPadOS desktop UA): file-input fallback, Chrome banner must not block them. */
   OE.ios = function () {
-    var ua = navigator.userAgent || "", p = navigator.platform || "";
+    var ua = navigator.userAgent || "";
     if (/iPad|iPhone|iPod/.test(ua)) return true;
-    return p === "MacIntel" && navigator.maxTouchPoints > 1;
+    /* iPadOS reports as Macintosh; a real touch pad has more than one touch point. */
+    return /Macintosh|Mac OS X/i.test(ua) && navigator.maxTouchPoints > 1;
   };
   /* Browser check: "ios" (share/download, no banner), "edge" (wipes site data on close on company laptops),
      "nofs" (no File System Access, e.g. Firefox), "" = fine (Chrome, incl. installed app). */
