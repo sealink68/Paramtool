@@ -1,0 +1,15 @@
+# paramtool-api — open dossiers (Cloudflare Worker + KV).
+# No secrets in this file. CLOUDFLARE_API_TOKEN stays in the environment.
+# Joachim, if this Worker is not deployed yet:
+#   1. npx wrangler kv namespace create OPEN
+#   2. Put the printed id in the [[kv_namespaces]] block below (replace REPLACE_AFTER_CREATE).
+#   3. npx wrangler deploy
+# The client calls https://paramtool-api.sealink68.workers.dev
+name = "paramtool-api"
+main = "src/index.js"
+compatibility_date = "2026-11-01"
+workers_dev = true
+
+[[kv_namespaces]]
+binding = "OPEN"
+id = "REPLACE_AFTER_CREATE"

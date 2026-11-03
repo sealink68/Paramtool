@@ -93,13 +93,16 @@
       OE.screens.form();
     };
   };
+  OE.loadTess = loadTess;
+  OE.prepOcrImage = prepImage;
   OE.smxMount = function () {
     if (!OE.ios() || $("smxBtn") || !$("dos")) return;
     var x = L(), y = other(), host = document.createElement("div");
     host.className = "smx";
     host.innerHTML = '<button type="button" class="btn scan" id="smxBtn">' + esc(x.scan) + "<small>" + esc(y.scan) + '</small></button><p class="hint scan-hint" id="smxHint">' + esc(x.scanSub) + '</p><input id="smxFile" type="file" accept="image/*" multiple hidden>';
-    var hint = $("dosN");
-    (hint || $("dos")).insertAdjacentElement("afterend", host);
+    var box = $("openBox"), hint = $("dosN");
+    if (box) box.appendChild(host);
+    else (hint || $("dos")).insertAdjacentElement("afterend", host);
     $("smxBtn").onclick = function () { $("smxFile").click(); };
     $("smxFile").addEventListener("change", function () {
       var files = [].slice.call(this.files || []);

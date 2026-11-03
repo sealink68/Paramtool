@@ -14,7 +14,7 @@ ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 SW = os.path.join(ROOT, "sw.js")
 EXT = {".html", ".css", ".js", ".json", ".webmanifest", ".png", ".jpg", ".jpeg", ".svg", ".ico", ".webp", ".gif",
        ".woff", ".woff2", ".ttf", ".otf", ".bat"}
-SKIP_DIRS = {".git", ".github", "tools", "tests", "node_modules"}
+SKIP_DIRS = {".git", ".github", "tools", "tests", "node_modules", "worker"}
 SKIP_FILES = {"sw.js"}
 BEGIN, END = "/* PRECACHE:BEGIN", "/* PRECACHE:END */"
 

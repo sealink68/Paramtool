@@ -360,7 +360,7 @@
     SC.form();
     var fi = $("file"); if (fi) try { $("drop").focus(); } catch (e) {}
   }
-  function resetForm() { mem.form = blank(); mem.sel = null; mem.dq = ""; SC.form(); try { $("dos").focus(); } catch (e) {} }
+  function resetForm() { mem.form = blank(); mem.sel = null; mem.dq = ""; mem.openWo = ""; mem.smxClient = null; SC.form(); try { $("dos").focus(); } catch (e) {} }
   /* Parameter files grouped per extension, newest of each group marked active. */
   function groupedHtml(x, files, bold) {
     return OE.fs.groups(files).map(function (g) {
@@ -469,7 +469,9 @@
     tick(); clearInterval(mem.tick); mem.tick = setInterval(tick, 15000);
     $("srchT").onclick = function () { setSearch(!mem.srchOpen); };
     upd(); numTip(); drawSearch(); scan(); if (f.dossier && f.fam && !mem.sel) checkExisting();
+    if (OE.openMount) OE.openMount();
     if (OE.smxMount) OE.smxMount();
+    if (OE.plateMount) OE.plateMount();
     OE.bind("save", function () { save(x, f); });
     if (mem.autorunLatest) { mem.autorunLatest = false; latestParam(x, function (file) { f.file = file; upd(); }); }
   };
@@ -556,6 +558,12 @@
   }
 
   /* ---------- save ---------- */
+  function forgetOpen() {
+    var wo = mem.openWo;
+    if (!wo || !OE.openDrop) return Promise.resolve();
+    mem.openWo = "";
+    return OE.openDrop(wo).catch(function () { return null; });
+  }
   function save(x, f) {
     var fn = famName(f), sn = subName(f), F = OE.fs, missing = [];
     if (esa() && fn) sn = fn;
@@ -603,6 +611,7 @@
       })
       .then(function () { return F.storeParam(pname, f.file); })
       .then(function () { r.paramCopy = pname; })
+      .then(forgetOpen)
       .then(function () { OE.busy = false; r.folder = F.label(); mem.result = r; mem.sel = null; mem.dq = ""; OE.rescan(); OE.go("result"); })
       .catch(function (e) { OE.busy = false; b.disabled = false; b.textContent = x.save; OE.err(OE.fmt(x.saveErr, { e: e.message || e })); });
   }
@@ -616,9 +625,11 @@
       mem.pdfBlob = blob;
       var pdfName = OE.fs.pdfName(fn, sn, f.dossier);
       mem.shareFiles = [new File([f.file], pname, { type: f.file.type || "application/octet-stream" }), new File([blob], pdfName, { type: "application/pdf" })];
-      OE.busy = false;
-      mem.result = { pname: pname, pdfName: pdfName, deleted: [], overwrote: false, files: files, ios: true, folder: OE.fs.shareName() + "\\projecten\\" + OE.fs.paramDirName() };
-      mem.sel = null; OE.go("result");
+      return forgetOpen().then(function () {
+        OE.busy = false;
+        mem.result = { pname: pname, pdfName: pdfName, deleted: [], overwrote: false, files: files, ios: true, folder: OE.fs.shareName() + "\\projecten\\" + OE.fs.paramDirName() };
+        mem.sel = null; OE.go("result");
+      });
     }).catch(function (e) { OE.busy = false; b.disabled = false; b.textContent = x.save; OE.err(OE.fmt(x.saveErr, { e: e.message || e })); });
   }
 
@@ -639,7 +650,7 @@
       (r.ios ? '<a class="btn sec" id="iosFileDl">' + x.iosDown + '</a><a class="btn sec" id="iosPdfDl">' + x.iosPdf + "</a>" + (navigator.share ? '<button class="btn pri" id="iosShare">' + x.iosShare + "</button>" : "") : "") +
       '<button class="btn pri" id="openP">' + x.openPdf + "</button></div>";
     $("card").innerHTML = h;
-    OE.bind("newD", function () { mem.form = blank(); mem.result = null; mem.sel = null; mem.srchOpen = false; OE.go("form", -1); });
+    OE.bind("newD", function () { mem.form = blank(); mem.result = null; mem.sel = null; mem.srchOpen = false; mem.openWo = ""; mem.smxClient = null; OE.go("form", -1); });
     OE.bind("openP", function () { if (!mem.pdfBlob) return; var u = URL.createObjectURL(mem.pdfBlob); window.open(u, "_blank"); setTimeout(function () { URL.revokeObjectURL(u); }, 60000); });
     if (r.ios && mem.shareFiles) {
       function link(id, file) { var a = $(id); if (!a || !file) return; a.href = URL.createObjectURL(file); a.download = file.name; }
