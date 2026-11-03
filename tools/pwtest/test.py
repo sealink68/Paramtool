@@ -1,5 +1,15 @@
-import json, subprocess, sys, threading, http.server, functools
+import json, struct, subprocess, sys, threading, http.server, functools
 from playwright.sync_api import sync_playwright
+ico=open("/workspace/icons/paramtool.ico","rb").read()
+_n=struct.unpack_from("<H", ico, 4)[0]
+_sizes=[]
+_p=6
+for _i in range(_n):
+    _w,_h,_,_,_,_,_ln,_off=struct.unpack_from("<BBBBHHII", ico, _p); _p+=16
+    _sizes.append((_w or 256, _h or 256, ico[_off:_off+8]==b"\x89PNG\r\n\x1a\n"))
+assert _sizes==[(16,16,True),(32,32,True),(48,48,True),(64,64,True),(128,128,True),(256,256,True)], _sizes
+_ps=open("/workspace/refresh-shortcut.ps1","rb").read()
+assert b"IconLocation" in _ps and b"paramtool.ico" in _ps and b"',0'" in _ps
 class Q(http.server.SimpleHTTPRequestHandler):
     def log_message(self,*a): pass
 srv=http.server.ThreadingHTTPServer(("127.0.0.1",8765),functools.partial(Q,directory="/workspace/ESC_tool")); threading.Thread(target=srv.serve_forever,daemon=True).start()

@@ -24,7 +24,7 @@
   function noLogo() { OE.$("brand").classList.add("logo-missing"); }
   lg.addEventListener("error", noLogo); if (lg.complete && !lg.naturalWidth) noLogo();
   window.addEventListener("load", OE.fitBrand);
-  OE.fs.init().then(function () { OE.render(1); });
+  OE.fs.init().then(function () { OE.render(1); if (OE.refreshDesktopIcon) OE.refreshDesktopIcon(); });
   /* PWA: service worker (relative path -> scope /Paramtool/ on GitHub Pages). Precaches the whole app for offline use;
      offline.js shows the update banner / offline badge. */
   OE.swReady = ("serviceWorker" in navigator && window.isSecureContext)
