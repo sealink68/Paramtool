@@ -342,9 +342,20 @@
   };
 
   /* ---- naming ---- */
+  /* File and folder names only. The form keeps the typed text.
+     Manual fields that enter a name: dossiernummer, family (also Ander…), submodel (also Ander…).
+     Serial and order number are not part of the file name. safeName turns whitespace, control
+     characters and \ / : * ? " < > | into "_", then drops a leading or trailing dot, space or underscore. */
   F.base = function (fam, sub, dos) { return OE.safeName(fam, true) + "_" + OE.safeName(sub, true) + "_" + OE.safeName(dos); };
   F.ext = function (name) { var m = /\.([^.\\/]+)$/.exec(name || ""); return m ? "." + m[1] : ""; };
-  F.paramName = function (fam, sub, dos, date, orig) { return F.base(fam, sub, dos) + "_" + OE.stamp(date) + F.ext(orig); };
+  /* Extension as stored. The allow-check still uses F.ext; this only cleans the written name. */
+  function safeExt(name) {
+    var raw = F.ext(name);
+    if (!raw || raw.charAt(0) !== ".") return "";
+    var body = OE.safeName(raw.slice(1));
+    return body ? "." + body : "";
+  }
+  F.paramName = function (fam, sub, dos, date, orig) { return F.base(fam, sub, dos) + "_" + OE.stamp(date) + safeExt(orig); };
   F.pdfName = function (fam, sub, dos) { return F.base(fam, sub, dos) + "_info.pdf"; };
   function reEsc(s) { return s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"); }
   /* Parameter files of this dossier: <Family>_<anything>_<Dossier>_<YYYY-MM-DD_HHMM>[.ext]; the sub-model part is free

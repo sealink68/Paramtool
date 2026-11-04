@@ -54,10 +54,16 @@ assert.strictEqual(safe("IP-00767007|KENTAUR FTS-E02"), "IP-00767007_KENTAUR_FTS
 assert.strictEqual(safe("a  b||c"), "a_b_c");
 assert.strictEqual(safe("  x. "), "x");
 assert.ok(safe("a\u0001b").indexOf("\u0001") < 0);
-assert.strictEqual(SM.version, "v2026.11.04-1");
+assert.strictEqual(safe("1|2\\3:4*5?6\"7<8>9"), "1_2_3_4_5_6_7_8_9");
+assert.strictEqual(safe("D1."), "D1");
+assert.strictEqual(safe("D1 "), "D1");
+assert.strictEqual(safe("A/B:C"), "A_B_C");
+assert.strictEqual(safe("ES250/130 Proline", true), "ES250_130_Proline");
+assert.strictEqual(safe("CON"), "_CON");
+assert.strictEqual(SM.version, "v2026.11.04-2");
 ["index.html", "sw.js", "js/app.js", "js/servicemax.js"].forEach(function (f) {
   var src = fs.readFileSync(path.join(root, f), "utf8");
-  assert.ok(src.indexOf("v2026.11.04-1") >= 0, f + " missing version");
+  assert.ok(src.indexOf("v2026.11.04-2") >= 0, f + " missing version");
 });
 var sw = fs.readFileSync(path.join(root, "sw.js"), "utf8");
 assert.ok(sw.indexOf("skipWaiting") >= 0);
