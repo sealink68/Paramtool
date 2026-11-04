@@ -255,15 +255,9 @@ h3.sub{font-size:15px;margin:16px 0 4px}
 .smx{margin:8px 0 4px}
 .scan{width:100%;background:#fff;color:var(--a);border:2px solid #c7d2fe;box-shadow:none}
 .scan small{display:block;color:var(--mu);font-weight:650;margin-top:2px}
-.btns .btn small{display:block;font-size:12px;font-weight:650;margin-top:2px;opacity:.9}
 .ocrbar{height:8px;background:#e2e8f0;border-radius:8px;overflow:hidden;margin:12px 0}
 .ocrbar i{display:block;height:100%;width:0;background:linear-gradient(90deg,var(--a),var(--b));transition:width .2s linear}
 .smxfields label{display:block;margin-top:12px}
 .smxfields label small{display:block;font-weight:650;color:var(--mu)}
 .smxfields textarea{min-height:52px}
-.openbox{margin:0 0 14px;border:1px solid #c7d2fe;border-radius:14px;padding:12px 14px;background:#f8fafc}
-.openbox h3{margin:0 0 6px;font-size:16px}
-.openbox .code{font-family:ui-monospace,monospace;letter-spacing:.14em;font-size:18px;font-weight:800}
-#openPair{text-transform:uppercase;letter-spacing:.14em;font-weight:800}
-.scan-hint{margin:4px 0 8px}
 .brw{background:#fff7ed;border:2px solid #fb923c;border-radius:16px;padding:14px 18px;margin:0 auto 14px;max-width:900px;color:#7c2d12;font-size:14px}.brw h3{margin:0 0 6px;font-size:17px}.brw ol{margin:6px 0 6px 20px;padding:0}.brw code{user-select:all;background:#fff;padding:2px 6px;border-radius:6px}.brwB{display:flex;gap:10px;flex-wrap:wrap}

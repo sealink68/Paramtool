@@ -344,8 +344,8 @@ with sync_playwright() as p:
     ok("Proline newest is xml only: %s"%shown.replace("\n"," "), "old.xml" in shown and "new.dat" not in shown and "x.eep" not in shown)
     ok("Proline picker accept is xml", pg.get_attribute("#file","accept")==".xml")
     ok("desktop hides the ServiceMax screenshot button", pg.query_selector("#smxBtn") is None)
-    ok("desktop hides Neem foto and shows open-dossier pairing", pg.query_selector("#plateBtn") is None and pg.query_selector("#openPair") is not None and "Open dossiers" in pg.inner_text("#openBox"))
-    ok("footer shows the version", pg.inner_text("#ver")=="v2026.11.03-6")
+    ok("desktop hides photo and open dossiers", pg.query_selector("#plateBtn") is None and pg.query_selector("#openBox") is None and pg.query_selector("#openSave") is None and "Open dossiers" not in pg.inner_text("#card"))
+    ok("footer shows the version", pg.inner_text("#ver")=="v2026.11.04-1")
     ctx.close()
     ctx,pg=page({}, picked=True)
     wiz(pg); pg.wait_for_selector("#dos")
@@ -358,7 +358,7 @@ with sync_playwright() as p:
     pg.add_init_script(path="/workspace/esctest/mock.js"); pg.goto(URL)
     wiz(pg); pg.wait_for_selector("#smxBtn")
     ok("iPhone shows Screenshot ServiceMax", "Screenshot ServiceMax inlezen" in pg.inner_text("#smxBtn") and pg.get_attribute("#smxFile","accept")=="image/*")
-    ok("iPhone ESC shows Neem foto and open-dossier save", "Neem foto" in pg.inner_text("#plateBtn") and pg.get_attribute("#plateFile","accept")=="image/*" and pg.get_attribute("#plateFile","capture")=="environment" and "Bewaar als open dossier" in pg.inner_text("#openSave") and pg.inner_text("#openCodeVal"))
+    ok("iPhone has no photo or open-dossier button", pg.query_selector("#plateBtn") is None and pg.query_selector("#openSave") is None and pg.query_selector("#openBox") is None)
     pg.evaluate("""() => {
       var t = ["Werkordernummer","WO-TEST145839","Account","TEST ACCOUNT NV","Geïnstalleerd product","1P-00767007|KENTAUR FTS-E02","Test Persoon","+32000000007"].join("\\n");
       OE.smxShowReview(ServiceMax.parse(t));
@@ -370,7 +370,7 @@ with sync_playwright() as p:
     ok("ESC still shows serial and order", pg.is_visible("#ser") and pg.is_visible("#ord"))
     pg.click("#line button[data-line=ESA]"); pg.wait_for_selector("#fam")
     ok("ESA still hides serial and order after the screenshot", pg.query_selector("#ser") is None and pg.query_selector("#ord") is None and pg.query_selector("#smxBtn"))
-    ok("iPhone ESA hides Neem foto and keeps open-dossier save", pg.query_selector("#plateBtn") is None and pg.query_selector("#openSave") is not None)
+    ok("iPhone ESA has no photo or open-dossier button", pg.query_selector("#plateBtn") is None and pg.query_selector("#openSave") is None)
     ctx.close()
     MAC="Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.5 Safari/605.1.15"
     ctx=b.new_context(service_workers="block", user_agent=MAC, viewport={"width":1024,"height":768}); pg=ctx.new_page()
@@ -379,63 +379,7 @@ with sync_playwright() as p:
     pg.add_init_script(path="/workspace/esctest/mock.js"); pg.goto(URL)
     wiz(pg); pg.wait_for_selector("#smxBtn")
     ok("iPadOS desktop UA shows the screenshot button", "Screenshot ServiceMax inlezen" in pg.inner_text("#smxBtn"))
-    ok("iPadOS shows Neem foto", "Neem foto" in pg.inner_text("#plateBtn"))
-    ctx.close()
-    # uncertain plate OCR: empty field, NL/FR message, focus. No line picker.
-    ctx,pg=page({}, picked=True)
-    wiz(pg); pg.wait_for_selector("#dos")
-    pg.evaluate("""() => OE.plateShow(OE.parsePlate('S/N: 190000000000001\\n03.02.2025\\n1000001', {confidence: 96}))""")
-    pg.wait_for_selector("#plateReview")
-    ok("confident serial is filled, unlabeled order stays empty", pg.input_value("#plateSer")=="190000000000001" and pg.input_value("#plateOrd")=="" and "niet zeker herkend" in pg.inner_text("#plateOrdMsg") and pg.is_hidden("#plateSerMsg"))
-    ok("uncertain order is focused and there is no line picker", pg.evaluate("document.activeElement.id")=="plateOrd" and pg.query_selector("[data-li]") is None and pg.query_selector(".chip") is None)
-    pg.click("#seg button[data-l=fr]"); pg.wait_for_selector("#dos")
-    pg.evaluate("""() => OE.plateShow(OE.parsePlate('S/N: 190000000000001\\nS/N: 190000000000002\\nAuftrags-Nr.: 1000001', {confidence: 96}))""")
-    pg.wait_for_selector("#plateReview")
-    ok("two serials stay empty with the French message", pg.input_value("#plateSer")=="" and "non reconnu avec certitude" in pg.inner_text("#plateSerMsg") and pg.input_value("#plateOrd")=="1000001" and pg.evaluate("document.activeElement.id")=="plateSer")
-    pg.fill("#plateSer", "190000000000001"); pg.click("#plateTake"); pg.wait_for_selector("#ser")
-    ok("manual serial is taken over", pg.input_value("#ser")=="190000000000001" and pg.input_value("#ord")=="1000001")
-    ctx.close()
-    # open dossier: pair, load, save deletes the online copy. Fake WO only.
-    calls=[]
-    def open_api(route):
-        req=route.request
-        calls.append((req.method, req.url, req.headers.get("x-paramtool-code"), req.post_data or ""))
-        rec={"wo":"WO-TEST145839","dossier":"IP-00000001|TESTDEUR FTS-E02","account":"TEST ACCOUNT NV","adres":"TESTSTRAAT 1","contact":"Test Persoon","product":"IP-00000001|TESTDEUR FTS-E02","fam":"Kentaur","sub":"FTS-E02","line":"ESC","serial":"190000000000001","order":"1000001","tech":"Jan P","updated":"2026-11-03T12:00:00.000Z"}
-        if req.method=="GET":
-            route.fulfill(status=200, content_type="application/json", body=json.dumps({"dossiers":[rec]}))
-        else:
-            route.fulfill(status=200, content_type="application/json", body="{}")
-    ctx,pg=page({}, picked=True)
-    pg.route("https://paramtool-api.sealink68.workers.dev/**", open_api)
-    wiz(pg); pg.wait_for_selector("#openPair")
-    pg.fill("#openPair", "AB23CD45"); pg.click("#openPairGo"); pg.wait_for_selector("#openList")
-    gets=[c for c in calls if c[0]=="GET"]
-    ok("paired PC lists the open dossier", "WO-TEST145839" in pg.inner_text("#openList") and gets and gets[0][2]=="AB23CD45")
-    pg.click("#openList button"); pg.wait_for_selector("#dos")
-    ok("open dossier fills product, serial and order and leaves the file empty", pg.input_value("#dos")=="IP-00000001|TESTDEUR FTS-E02" and pg.input_value("#ser")=="190000000000001" and pg.input_value("#ord")=="1000001" and "xml" not in pg.inner_text("#fileT").lower())
-    pg.set_input_files("#file", {"name":"ok.xml","mimeType":"text/xml","buffer":b"<a/>"})
-    pg.click("#save"); pg.wait_for_selector("#rFile")
-    ok("saving the open dossier deletes it online", any(m=="DELETE" and "WO-TEST145839" in u for m,u,_,_ in calls))
-    ctx.close()
-    IOS2="Mozilla/5.0 (iPhone; CPU iPhone OS 17_5 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.5 Mobile/15E148 Safari/604.1"
-    posted=[]
-    def open_post(route):
-        req=route.request
-        posted.append(req.post_data or "")
-        route.fulfill(status=200, content_type="application/json", body="{}")
-    ctx=b.new_context(service_workers="block", user_agent=IOS2, viewport={"width":390,"height":844}); pg=ctx.new_page()
-    pg.add_init_script("sessionStorage.setItem('mockcfg','{}');sessionStorage.setItem('perm','granted');sessionStorage.setItem('dirPicked','1');")
-    pg.add_init_script(path="/workspace/esctest/mock.js"); pg.route("https://paramtool-api.sealink68.workers.dev/**", open_post); pg.goto(URL)
-    wiz(pg); pg.wait_for_selector("#openSave")
-    pg.evaluate("""() => {
-      var t = ["Werkordernummer","WO-TEST145839","Account","TEST ACCOUNT NV","Geïnstalleerd product","IP-00000001|TESTDEUR FTS-E02","Test Persoon","+32000000007"].join("\\n");
-      OE.smxShowReview(ServiceMax.parse(t));
-    }""")
-    pg.click("#ocrtake"); pg.wait_for_selector("#fam")
-    pg.select_option("#fam", label="Kentaur"); pg.select_option("#sub", label="FTS-E02")
-    pg.click("#openSave"); pg.wait_for_selector("#openMsg:not([hidden])")
-    body="\n".join(posted)
-    ok("iPhone open dossier posts fields without a file", "WO-TEST145839" in body and "IP-00000001|TESTDEUR FTS-E02" in body and '"file"' not in body and "Open dossier bewaard" in pg.inner_text("#openMsg"))
+    ok("iPadOS has no photo or open-dossier button", pg.query_selector("#plateBtn") is None and pg.query_selector("#openSave") is None and pg.query_selector("#openBox") is None)
     ctx.close(); b.close()
 srv.shutdown()
 print("%d/%d passed"%(sum(c for _,c in res),len(res))); sys.exit(0 if all(c for _,c in res) else 1)
