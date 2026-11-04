@@ -59,9 +59,18 @@
     var S = OE.S;
     if (!(S.tech && S.tech.first)) return "first";
     if (!S.tech.last) return "last";
-    if (!S.roleSet) return "role";
+    if (!S.roleSet) {
+      if (OE.ios && OE.ios()) { S.line = "ESA"; S.roleSet = true; OE.save(); }
+      else return "role";
+    }
     if (!S.lang) return "lang";
+    if (OE.ios && OE.ios()) return "lang";
     return "share";
+  }
+  /* iPhone/iPad start on ESA. ESC stays in the header. A reset (new device or new dossier) returns to ESA. */
+  function iosStandardLine() {
+    if (!(OE.ios && OE.ios()) || OE.S.line === "ESA") return;
+    OE.S.line = "ESA"; OE.S.roleSet = true; OE.save();
   }
   function goStep(step) { if (!mem.wiz) mem.wiz = {}; mem.wiz.step = step; OE.render(1); }
   function finishWizard() {
@@ -111,6 +120,10 @@
       });
       return;
     }
+    if (step === "role" && OE.ios && OE.ios()) {
+      S.line = "ESA"; S.roleSet = true; OE.save();
+      mem.wiz.step = "lang"; step = "lang";
+    }
     if (step === "role") {
       $("card").innerHTML = wizFrame(3, 4, '<h2 class="q">' + esc(W("wizRole")) + '</h2><button class="btn pri big" id="roleEsc">ESC<small>ESC_Share</small></button><button class="btn sec big" id="roleEsa">ESA<small>ESA_Share</small></button><div class="btns"><button class="btn sec" id="wizBack">‹ ' + esc(W("back")) + "</button></div>");
       function choose(line) {
@@ -125,7 +138,7 @@
     }
     if (step === "lang") {
       $("card").innerHTML = wizFrame(4, 4, '<h2 class="q">' + esc(W("wizLang")) + '</h2><button class="btn pri big" data-l="nl">Nederlands<small>NL</small></button><button class="btn sec big" data-l="fr">Français<small>FR</small></button><div class="btns"><button class="btn sec" id="wizBack">‹ ' + esc(W("back")) + "</button></div>");
-      OE.bind("wizBack", function () { goStep("role"); });
+      OE.bind("wizBack", function () { goStep(OE.ios && OE.ios() ? "last" : "role"); });
       [].forEach.call($("card").querySelectorAll("[data-l]"), function (b) {
         b.onclick = function () {
           S.lang = b.dataset.l; OE.save(); OE.hdr(); OE.brwUI();
@@ -360,7 +373,7 @@
     SC.form();
     var fi = $("file"); if (fi) try { $("drop").focus(); } catch (e) {}
   }
-  function resetForm() { mem.form = blank(); mem.sel = null; mem.dq = ""; SC.form(); try { $("dos").focus(); } catch (e) {} }
+  function resetForm() { iosStandardLine(); mem.form = blank(); mem.sel = null; mem.dq = ""; if (OE.hdr) OE.hdr(); SC.form(); try { $("dos").focus(); } catch (e) {} }
   /* Parameter files grouped per extension, newest of each group marked active. */
   function groupedHtml(x, files, bold) {
     return OE.fs.groups(files).map(function (g) {
@@ -639,7 +652,7 @@
       (r.ios ? '<a class="btn sec" id="iosFileDl">' + x.iosDown + '</a><a class="btn sec" id="iosPdfDl">' + x.iosPdf + "</a>" + (navigator.share ? '<button class="btn pri" id="iosShare">' + x.iosShare + "</button>" : "") : "") +
       '<button class="btn pri" id="openP">' + x.openPdf + "</button></div>";
     $("card").innerHTML = h;
-    OE.bind("newD", function () { mem.form = blank(); mem.result = null; mem.sel = null; mem.srchOpen = false; OE.go("form", -1); });
+    OE.bind("newD", function () { iosStandardLine(); mem.form = blank(); mem.result = null; mem.sel = null; mem.srchOpen = false; OE.go("form", -1); });
     OE.bind("openP", function () { if (!mem.pdfBlob) return; var u = URL.createObjectURL(mem.pdfBlob); window.open(u, "_blank"); setTimeout(function () { URL.revokeObjectURL(u); }, 60000); });
     if (r.ios && mem.shareFiles) {
       function link(id, file) { var a = $(id); if (!a || !file) return; a.href = URL.createObjectURL(file); a.download = file.name; }

@@ -5,7 +5,8 @@
   OE.loadState = function () {
     var s = {}; try { s = JSON.parse(localStorage.getItem(KEY) || "{}") || {}; } catch (e) {}
     var named = !!(s.lang && s.tech && s.tech.first && s.tech.last);
-    return { lang: s.lang || "", tech: s.tech || { first: "", last: "" }, screen: s.screen || "form", line: s.line === "ESA" ? "ESA" : "ESC",
+    var line = s.line === "ESA" || s.line === "ESC" ? s.line : ((OE.ios && OE.ios()) ? "ESA" : "ESC");
+    return { lang: s.lang || "", tech: s.tech || { first: "", last: "" }, screen: s.screen || "form", line: line,
       setupDone: s.setupDone != null ? !!s.setupDone : named, roleSet: !!s.roleSet, srcOpen: !!s.srcOpen };
   };
   OE.save = function () {

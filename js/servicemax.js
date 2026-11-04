@@ -229,7 +229,7 @@ function merge(texts){
   acc=acc.concat(lines.slice(best))}
  return acc.join("\n")}
 
-var VERSION="v2026.11.04-2";
+var VERSION="v2026.11.04-3";
 // Filename / URL-name only. The form, report and clipboard keep the original text.
 function fileName(value){
  var s=String(value==null?"":value);

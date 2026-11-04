@@ -60,10 +60,10 @@ assert.strictEqual(safe("D1 "), "D1");
 assert.strictEqual(safe("A/B:C"), "A_B_C");
 assert.strictEqual(safe("ES250/130 Proline", true), "ES250_130_Proline");
 assert.strictEqual(safe("CON"), "_CON");
-assert.strictEqual(SM.version, "v2026.11.04-2");
+assert.strictEqual(SM.version, "v2026.11.04-3");
 ["index.html", "sw.js", "js/app.js", "js/servicemax.js"].forEach(function (f) {
   var src = fs.readFileSync(path.join(root, f), "utf8");
-  assert.ok(src.indexOf("v2026.11.04-2") >= 0, f + " missing version");
+  assert.ok(src.indexOf("v2026.11.04-3") >= 0, f + " missing version");
 });
 var sw = fs.readFileSync(path.join(root, "sw.js"), "utf8");
 assert.ok(sw.indexOf("skipWaiting") >= 0);
