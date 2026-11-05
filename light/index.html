@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="theme-color" content="#4f46e5">
+<title>param_light</title>
+<link rel="icon" href="../favicon.ico" sizes="any">
+<link rel="apple-touch-icon" href="../icons/apple-touch-icon.png">
+<link rel="stylesheet" href="../css/style.css">
+</head>
+<body>
+<div class="app">
+<header>
+  <div class="hl" id="brand">
+    <span class="brand" role="img" aria-label="dormakaba"><img class="bf" id="brand-logo" src="../img/logo-full.svg" width="129" height="14" alt=""><img class="bm" id="brand-mark" src="../img/logo-mark.svg" width="24" height="15" alt=""></span>
+    <h1 id="title">param_light</h1>
+  </div>
+  <div class="hr">
+    <div class="seg line" id="line" role="radiogroup" aria-label="ESA / ESC"><button type="button" role="radio" data-line="ESA" aria-checked="false">ESA</button><button type="button" role="radio" data-line="ESC" aria-checked="false">ESC</button></div>
+    <div class="seg" id="seg" role="radiogroup" aria-label="NL / FR"><button type="button" data-l="nl">NL</button><button type="button" data-l="fr">FR</button></div>
+  </div>
+</header>
+<div class="card" id="light">
+  <p class="hint" id="office"></p>
+  <label class="lbl" id="famLbl" for="fam"></label>
+  <select id="fam"></select>
+  <input id="famO" class="oth" hidden autocomplete="off">
+  <div id="subRow">
+    <label class="lbl" id="subLbl" for="sub"></label>
+    <select id="sub"></select>
+    <input id="subO" class="oth" hidden autocomplete="off">
+  </div>
+  <figure class="prod" id="prod"></figure>
+</div>
+</div>
+<p class="ver" id="ver">v2026.11.05-1</p>
+<script src="../js/config.js"></script>
+<script src="../js/models.js"></script>
+<script src="light.js"></script>
+</body>
+</html>
