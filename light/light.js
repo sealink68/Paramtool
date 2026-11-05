@@ -28,18 +28,7 @@
   /* ESA for the office page only. OE.CFG.ESA (the field app) is not changed. */
   function local(id, img, nl, fr) { return { id: id, img: img, local: true, desc: { nl: nl, fr: fr } }; }
   function esaLight() {
-    var proline = OE.CFG.ESA.map(function (n) {
-      return { id: n, img: "proline.webp", desc: { nl: "Schuifdeuraandrijving ES Proline", fr: "Opérateur pour porte coulissante ES Proline" } };
-    });
-    proline.push(local("ES PROLINE", "es-proline.jpg", "Schuifdeuraandrijving ES PROLINE (brochure)", "Opérateur coulissant ES PROLINE (brochure)"));
-    proline.push(local("ES PROLINE T", "es-proline.jpg", "Schuifdeuraandrijving ES PROLINE T", "Opérateur coulissant ES PROLINE T"));
-    var o = {};
-    o["ES Proline"] = proline;
-    o["ES 400"] = [
-      local("ES 400", "es-400.jpg", "Schuifdeuraandrijving ES 400", "Opérateur coulissant ES 400"),
-      local("ES 410", "es-400.jpg", "Schuifdeuraandrijving ES 410", "Opérateur coulissant ES 410"),
-      local("ES 420", "es-400.jpg", "Schuifdeuraandrijving ES 420", "Opérateur coulissant ES 420")
-    ];
+    var o = OE.catalog();
     o.KTV = [
       local("KTV 3", "ktv-3-4.jpg", "Karusselltür met 3 vleugels", "Porte tambour à 3 vantaux"),
       local("KTV 4", "ktv-3-4.jpg", "Karusselltür met 4 vleugels", "Porte tambour à 4 vantaux"),
@@ -47,26 +36,6 @@
     ];
     o.KTC = [
       local("KTC 2", "ktc-2.jpg", "Grote karusselltür met geïntegreerde schuifdeur", "Porte tambour grande capacité avec porte coulissante intégrée")
-    ];
-    o.ED = [
-      local("ED 100", "ed-swing.jpg", "Draaideuraandrijving ED 100", "Opérateur de porte battante ED 100"),
-      local("ED 250", "ed-swing.jpg", "Draaideuraandrijving ED 250", "Opérateur de porte battante ED 250"),
-      local("ED ESR 1", "ed-swing.jpg", "Draaideursysteem ESR 1", "Système de porte battante ESR 1"),
-      local("ED ESR 2", "ed-swing.jpg", "Draaideursysteem ESR 2", "Système de porte battante ESR 2"),
-      local("EasyAssist", "easyassist.jpg", "Ondersteunende draaideuraandrijving EasyAssist", "Opérateur d'assistance EasyAssist pour porte battante")
-    ];
-    o.ST = [
-      local("ST PRO Green", "st-pro-green.jpg", "Automatische schuifdeur PRO Green", "Porte coulissante automatique PRO Green"),
-      local("ST PRO Green RC2", "st-pro-green-rc.jpg", "Schuifdeur PRO Green, weerstandsklasse RC2", "Porte coulissante PRO Green, classe de résistance RC2"),
-      local("ST PRO Green RC3", "st-pro-green-rc.jpg", "Schuifdeur PRO Green, weerstandsklasse RC3", "Porte coulissante PRO Green, classe de résistance RC3"),
-      local("ST FLEX", "st-flex.jpg", "Automatische schuifdeur FLEX", "Porte coulissante automatique FLEX"),
-      local("ST FLEX Green", "st-flex-green.jpg", "Automatische schuifdeur FLEX Green", "Porte coulissante automatique FLEX Green"),
-      local("ST PURE", "st-pure.jpg", "Fijne profielschuifdeur PURE", "Porte coulissante à profilé fin PURE"),
-      local("ST MANET", "st-manet.jpg", "Glazen schuifdeur MANET", "Porte coulissante vitrée MANET")
-    ];
-    o.TST = [
-      local("TST FLEX", "tst-flex.jpg", "Telescopische schuifdeur FLEX", "Porte coulissante télescopique FLEX"),
-      local("TST FLEX Green", "tst-flex-green.jpg", "Telescopische schuifdeur FLEX Green", "Porte coulissante télescopique FLEX Green")
     ];
     o.CS = [
       local("CS 80 MAGNEO", "cs-80-magneo.jpg", "Magneetschuifdeuraandrijving CS 80 MAGNEO", "Opérateur coulissant magnétique CS 80 MAGNEO")
@@ -78,13 +47,8 @@
     return o;
   }
   var FAM = {
-    "ES Proline": { nl: "ES Proline", fr: "ES Proline" },
-    "ES 400": { nl: "ES 400", fr: "ES 400" },
     KTV: { nl: "KTV · Karusselltür", fr: "KTV · Porte tambour" },
     KTC: { nl: "KTC · Karusselltür", fr: "KTC · Porte tambour" },
-    ED: { nl: "ED · Draaideur", fr: "ED · Porte battante" },
-    ST: { nl: "ST · Schuifdeur", fr: "ST · Porte coulissante" },
-    TST: { nl: "TST · Telescopische schuifdeur", fr: "TST · Porte coulissante télescopique" },
     CS: { nl: "CS · Schuifdeuraandrijving", fr: "CS · Opérateur coulissant" },
     BST: { nl: "BST · Bogenschuifdeur", fr: "BST · Porte coulissante cintrée" }
   };
